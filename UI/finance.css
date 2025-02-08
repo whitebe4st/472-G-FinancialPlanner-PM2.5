@@ -1,0 +1,110 @@
+nav{
+    display: flex;
+    justify-content: space-between;
+}
+
+.navBar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sideBar{
+    list-style-type: none;
+    gap : 20px;
+}
+
+.sideBar a{
+    display: block;
+    font-size : 30px;
+    margin-top: 30px;
+    text-decoration: none;
+    color : #6DAEFC;
+    font-family: Jost;
+    border : 2px solid black;
+    padding-left : 20px;
+    padding-right : 20px;
+    border-radius: 10px;
+}
+
+.grid{
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    gap : 40px;
+    margin-left : 20px;
+    margin-right : 20px;
+    height : 100%;
+    
+}
+
+.container{
+    box-sizing: border-box;
+   
+    margin-bottom: 10px;
+    padding : 10px;
+}
+
+.searchBar{
+    display: flex;
+    width : 70%;
+    height : 50px;
+    background-color: rgb(218, 255, 255);
+    border : 3px solid black;
+    border-radius: 10px;
+}
+
+.searchBarText{
+    color : rgb(117, 107, 107);
+    flex-grow: 1;
+    min-width: 150px;
+}
+
+.searchIcon{
+    width : 30px;
+}
+
+.user{
+    display: flex;
+}
+
+table{
+    border : none;
+}
+
+.table-container{
+    padding-left : 0px;
+    padding-right : 0px;
+    padding-bottom: 200px;
+    margin-top : 0px;
+
+}
+
+.head-table{
+    background-color :rgb(172, 168, 168);
+}
+
+.editBar{
+    display : flex;
+    gap : 20px;
+    justify-content: center;
+    border : 2px solid black;
+    width : 50%;
+    margin-left : 25%;
+}
+
+.editText{
+    text-decoration: none;
+    color : black;
+    font-weight: bolder;
+}
+
+.addBar{
+    display : flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.addIcon{
+    font-size : 50px;
+    text-decoration: none;
+}
