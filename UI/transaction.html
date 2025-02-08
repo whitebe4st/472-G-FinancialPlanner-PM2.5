@@ -55,12 +55,120 @@
                     </tr>
                    
             </table>
-            <div class="addBar">
-                <a href = "#" class= "addIcon">+</a>
+            <div class="addBar-popup" id="popup-addTransaction">
+                <div class="overlay" onclick="TogglePopup()"></div>
+                <div class="content">
+                    <div class="close-btn" onclick="TogglePopup()">&times;</div>
+                    <h1>Add Transaction</h1>
+                    <form>
+                        <label>NAME</label>
+                        <input type="text" placeholder="NAME">
+            
+                        <label>TRANSACTION</label>
+                        <input type="text" placeholder="TRANSACTION">
+            
+                        <label>AMOUNT</label>
+                        <input type="number" placeholder="AMOUNT">
+            
+                        <label>CATEGORY</label>
+                        <select>
+                            <option>Category</option>
+                            <option>Food</option>
+                            <option>Transport</option>
+                            <option>Entertainment</option>
+                        </select>
+            
+                        <div class="row">
+                            <div class="column">
+                                <label>TYPE</label>
+                                <select>
+                                    <option>Income</option>
+                                    <option>Expense</option>
+                                </select>
+                            </div>
+                            <div class="column">
+                                <label>DATE</label>
+                                <input class="input-date" type="date">
+                            </div>
+                        </div>
+            
+                        <button type="submit" class="save-btn">Save</button>
+            
+                        <p class="or">OR</p>
+            
+                        <button type="button" class="bookmark-btn">Add from Bookmark</button>
+                    </form>
+
+                </div>
             </div>
+            <div class="addBar-btn">
+                <button class="addBar-btn" onclick="TogglePopup()">+</button>
+            </div>
+            <script>
+                function TogglePopup(){
+                    document.getElementById("popup-addTransaction").classList.toggle("active");
+                }
+            </script>
+
             <div class="editBar">
                 <a href="#" class="editText">1 item</a>
-                <a href="#" class="editText">edit</a>
+                
+                <div class="addBar-popup" id="popup-editTransaction">
+                    <div class="overlay" onclick="TogglePopupEditTrans()"></div>
+                    <div class="content">
+                        <div class="close-btn" onclick="TogglePopupEditTrans()">&times;</div>
+                        <h1>Edit Transaction</h1>
+                        <form>
+                            <label>NAME</label>
+                            <input type="text" placeholder="NAME">
+                
+                            <label>TRANSACTION</label>
+                            <input type="text" placeholder="TRANSACTION">
+                
+                            <label>AMOUNT</label>
+                            <input type="number" placeholder="AMOUNT">
+                
+                            <label>CATEGORY</label>
+                            <select>
+                                <option>Category</option>
+                                <option>Food</option>
+                                <option>Transport</option>
+                                <option>Entertainment</option>
+                            </select>
+                
+                            <div class="row">
+                                <div class="column">
+                                    <label>TYPE</label>
+                                    <select>
+                                        <option>Income</option>
+                                        <option>Expense</option>
+                                    </select>
+                                </div>
+                                <div class="column">
+                                    <label>DATE</label>
+                                    <input class="input-date" type="date">
+                                </div>
+                            </div>
+                
+                            <button type="submit" class="save-btn">Save</button>
+                
+                            <p class="or">OR</p>
+                
+                            <button type="button" class="bookmark-btn">Add from Bookmark</button>
+                        </form>
+    
+                    </div>
+                </div>
+                <div class="editBar-btn">
+                    <button class="addBar-btn" onclick="TogglePopupEditTrans()">Edit</button>
+                </div>
+
+                <script>
+                    function TogglePopupEditTrans(){
+                        document.getElementById("popup-editTransaction").classList.toggle("active");
+                    }
+                </script>
+
                 <a href="#" class="editText">bookmark</a>
                 <a href="#" class="editText">delete</a>
             </div>
