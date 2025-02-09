@@ -1,0 +1,339 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Jost', sans-serif;
+    background: #FFFFFF;
+    min-height: 100vh;
+}
+
+/* Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.container nav {
+    border-right: 2px solid #D8D8D8;
+    padding: 25px;
+    height: 100%;
+}
+
+.sideBar {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 30px;
+}
+
+.sideBar a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    border: 2px solid #D8D8D8;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #A0A0A0;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.sideBar a:hover, .sideBar a.active {
+    background: #D8D8D8;
+}
+
+/* Header/Navbar Styles */
+.navBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    border-bottom: 2px solid #D8D8D8;
+    padding: 0 30px;
+}
+
+/* Search Bar Styles */
+.searchBar {
+    display: flex;
+    align-items: center;
+    width: 420px;
+    height: 44px;
+    border: 2px solid #D8D8D8;
+    border-radius: 10px;
+    padding: 0 10px;
+    gap: 8px;
+    background: #FFFFFF;
+    margin: 0;
+}
+
+.searchInput {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    color: #A0A0A0;
+}
+
+.searchInput::placeholder {
+    color: #D8D8D8;
+}
+
+/* User Section Styles */
+.user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.notification-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Main Content Styles */
+.container h1 {
+    font-size: 32px;
+    color: #A0A0A0;
+    margin-bottom: 10px;
+}
+
+.container p {
+    color: #A0A0A0;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* Table Container Styles */
+.table-container {
+    width: 100%;
+    padding: 20px;
+    border: 2px solid #D8D8D8;
+    border-radius: 40px;
+}
+
+/* Table Styles */
+table {
+    width: 1080px; /* Fixed width as per design */
+    margin: 0 auto; /* Center the table */
+    border-collapse: collapse;
+}
+
+.table-header {
+    width: 1080px; /* Match table width */
+    margin: 0 auto; /* Center the header */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Keep other table styles */
+.head-table {
+    background: #D8D8D8;
+    color: #A0A0A0;
+}
+
+.table-container th, .table-container td {
+    padding: 15px;
+    text-align: left;
+    color: #A0A0A0;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+/* Add Transaction Button */
+.addBar-btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.addBar-btn button {
+    width: 40px;
+    height: 40px;
+    background: #A0A0A0;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 10px;
+}
+
+.page-btn, .page-nav {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #A0A0A0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    background: #D8D8D8;
+    border-radius: 50%;
+}
+
+.page-btn.active {
+    background: #61646B;
+    color: #FFFFFF;
+    border-radius: 50%;
+}
+
+.page-nav {
+    color: #A0A0A0;
+}
+
+.page-nav:hover {
+    color: #61646B;
+}
+
+.page-nav:disabled {
+    color: #D8D8D8;
+    cursor: not-allowed;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 2px solid #D8D8D8;
+    border-radius: 5px;
+    background: white;
+    color: #A0A0A0;
+    cursor: pointer;
+}
+
+/* Profile Styles */
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Profile and Notification Links */
+.notification-icon, .profile {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Popup Styles */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 400px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #A0A0A0;
+    font-weight: 600;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #D8D8D8;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.button-group button {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+}
+
+.button-group button[type="button"] {
+    background: #D8D8D8;
+    color: #A0A0A0;
+}
+
+.button-group button[type="submit"] {
+    background: #A0A0A0;
+    color: white;
+}
