@@ -205,11 +205,20 @@
     }
 
     function showAddTransactionPopup() {
-        document.getElementById('addTransactionPopup').style.display = 'flex';
+        const popup = document.getElementById('addTransactionPopup');
+        popup.style.display = 'flex';
+        // Trigger reflow to ensure transition works
+        popup.offsetHeight;
+        popup.classList.add('active');
     }
 
     function hideAddTransactionPopup() {
-        document.getElementById('addTransactionPopup').style.display = 'none';
+        const popup = document.getElementById('addTransactionPopup');
+        popup.classList.remove('active');
+        // Wait for animation to finish before hiding
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 300);
     }
     </script>
 </body>
