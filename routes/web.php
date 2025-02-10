@@ -21,6 +21,10 @@ Route::view('/dashboard', 'html.dashboard');
 Route::view('/bookmark', 'html.bookmark');
 
 // Transaction routes
-Route::get('/transaction', function() {
-    return view('html.transaction');
-})->middleware('auth');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/transaction', function() {
+        return view('html.transaction');
+    });
+    Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/transactions/categories', [TransactionController::class, 'getCategories']);
+});

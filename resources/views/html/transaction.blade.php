@@ -6,6 +6,7 @@
     <title>Transaction</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
     <div class="grid">
@@ -120,34 +121,21 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach(Auth::user()->transactions()->orderBy('transaction_date', 'desc')->get() as $transaction)
                             <tr>
                                 <td><input type="checkbox" class="row-checkbox"></td>
-                                <td>Keyboard</td>
-                                <td>01/01/27</td>
-                                <td>$6,000</td>
-                                <td>Exp.</td>
-                                <td>ของใช้</td>
+                                <td>{{ $transaction->description }}</td>
+                                <td>{{ $transaction->transaction_date->format('d/m/y') }}</td>
+                                <td>${{ number_format($transaction->amount, 2) }}</td>
+                                <td>{{ $transaction->type === 'expense' ? 'Exp.' : 'Inc.' }}</td>
+                                <td>{{ $transaction->category }}</td>
                                 <td>
                                     <svg width="24" height="24" viewBox="0 0 24 24">
-                                        <!-- Bookmark icon path -->
                                         <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
                                     </svg>
                                 </td>
                             </tr>
-                            <tr>
-                                <td><input type="checkbox" class="row-checkbox"></td>
-                                <td>Salary</td>
-                                <td>01/01/27</td>
-                                <td>$50,000</td>
-                                <td>Inc.</td>
-                                <td>รายรับ</td>
-                                <td>
-                                    <svg width="24" height="24" viewBox="0 0 24 24">
-                                        <!-- Bookmark icon path -->
-                                        <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                                    </svg>
-                                </td>
-                            </tr>
+                            @endforeach
                         </tbody>
                     </table>
 
@@ -179,25 +167,43 @@
     <div id="addTransactionPopup" class="popup">
         <div class="popup-content">
             <h2>Add Transaction</h2>
-            <form>
+            <form id="transactionForm">
+                @csrf
                 <div class="form-group">
-                    <label for="transaction">Transaction</label>
-                    <input type="text" id="transaction" name="transaction">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" name="description" required>
                 </div>
                 <div class="form-group">
                     <label for="amount">Amount</label>
-                    <input type="number" id="amount" name="amount">
+                    <input type="number" id="amount" name="amount" step="0.01" required>
                 </div>
                 <div class="form-group">
                     <label for="type">Type</label>
-                    <select id="type" name="type">
+                    <select id="type" name="type" required>
                         <option value="expense">Expense</option>
                         <option value="income">Income</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="category">Category</label>
-                    <input type="text" id="category" name="category">
+                    <div class="category-input-container">
+                        <input 
+                            type="text" 
+                            id="category" 
+                            name="category" 
+                            list="categories" 
+                            autocomplete="off"
+                            required
+                            oninput="filterCategories(this.value)"
+                        >
+                        <div id="categoryDropdown" class="category-dropdown">
+                            <!-- Categories will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="transaction_date">Date</label>
+                    <input type="date" id="transaction_date" name="transaction_date" required>
                 </div>
                 <div class="button-group">
                     <button type="button" onclick="hideAddTransactionPopup()">Cancel</button>
@@ -233,6 +239,125 @@
             popup.style.display = 'none';
         }, 300);
     }
+
+    let categories = []; // Will store all user categories
+
+    function loadCategories() {
+        fetch('/transactions/categories')
+            .then(response => response.json())
+            .then(data => {
+                categories = data;
+                const dropdown = document.getElementById('categoryDropdown');
+                updateCategoryDropdown('');
+            });
+    }
+
+    function updateCategoryDropdown(filter) {
+        const dropdown = document.getElementById('categoryDropdown');
+        dropdown.innerHTML = '';
+        
+        const filteredCategories = categories.filter(cat => 
+            cat.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filteredCategories.length > 0) {
+            filteredCategories.forEach(category => {
+                const div = document.createElement('div');
+                div.className = 'category-option';
+                div.textContent = category;
+                div.onclick = () => selectCategory(category);
+                dropdown.appendChild(div);
+            });
+        } else if (filter) {
+            const div = document.createElement('div');
+            div.className = 'no-categories';
+            div.textContent = `Press Enter to add "${filter}" as new category`;
+            dropdown.appendChild(div);
+        } else {
+            const div = document.createElement('div');
+            div.className = 'no-categories';
+            div.textContent = 'No categories found';
+            dropdown.appendChild(div);
+        }
+    }
+
+    function filterCategories(value) {
+        const dropdown = document.getElementById('categoryDropdown');
+        dropdown.classList.add('show');
+        updateCategoryDropdown(value);
+    }
+
+    function selectCategory(category) {
+        document.getElementById('category').value = category;
+        document.getElementById('categoryDropdown').classList.remove('show');
+    }
+
+    // Handle clicking outside to close dropdown
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('categoryDropdown');
+        const input = document.getElementById('category');
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+
+    // Handle category input keyboard events
+    document.getElementById('category').addEventListener('keydown', function(e) {
+        const dropdown = document.getElementById('categoryDropdown');
+        if (e.key === 'Enter' && !categories.includes(this.value)) {
+            e.preventDefault();
+            // Allow new category
+            dropdown.classList.remove('show');
+        }
+    });
+
+    // Focus on category input
+    document.getElementById('category').addEventListener('focus', function() {
+        document.getElementById('categoryDropdown').classList.add('show');
+        updateCategoryDropdown(this.value);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load categories when page loads
+        loadCategories();
+        
+        // Handle form submission
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submitted'); // Debug log
+            
+            const formData = new FormData(this);
+            const formDataObject = Object.fromEntries(formData);
+            console.log('Form data:', formDataObject); // Debug log
+            
+            fetch('/transactions', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formDataObject)
+            })
+            .then(response => {
+                console.log('Response:', response); // Debug log
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data:', data); // Debug log
+                if (data.success) {
+                    hideAddTransactionPopup();
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add transaction');
+            });
+        });
+    });
     </script>
 </body>
 </html>

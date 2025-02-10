@@ -54,4 +54,9 @@ class User extends Authenticatable
     protected $dates = [
         'created_at'
     ];
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id');
+    }
 }
