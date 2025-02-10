@@ -14,9 +14,24 @@
             <p class="subtitle">Create your account to start planning.</p>
             
             <form class="auth-form" action="/register" method="POST">
+                @csrf
+                
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" class="{{ $errors->has('username') ? 'error' : '' }}" required>
+                    @error('username')
+                        <span class="error-message">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="form-group">

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - Financial Planner</title>
     <link rel="stylesheet" href="/css/auth.css">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,6 +15,8 @@
             <p class="subtitle">Welcome back! Please login to your account.</p>
             
             <form class="auth-form" action="/login" method="POST">
+                @csrf
+                
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" required>

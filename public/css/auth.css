@@ -74,6 +74,33 @@ h1 {
     border-color: #A0A0A0;
 }
 
+.form-group input.error {
+    border-color: #FF3B30;
+}
+
+.error-message {
+    color: #FF3B30;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.alert-danger {
+    background-color: #FFE5E5;
+    border: 1px solid #FF3B30;
+    color: #FF3B30;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 1rem;
+}
+
 /* Password Input */
 .password-input {
     position: relative;

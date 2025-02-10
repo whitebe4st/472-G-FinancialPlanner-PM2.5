@@ -17,10 +17,12 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
-        'name',
+        'username',
         'email',
-        'password',
+        'password_hash',
     ];
 
     /**
@@ -29,8 +31,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password_hash',
     ];
 
     /**
@@ -45,4 +46,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Since your table has created_at but not updated_at
+    const UPDATED_AT = null;
+    
+    // Specify which columns are dates
+    protected $dates = [
+        'created_at'
+    ];
 }
