@@ -343,8 +343,14 @@ table {
 }
 
 .button-group button[type="button"] {
-    background: #D8D8D8;
-    color: #A0A0A0;
+    background: white;
+    color: #FF3B30;
+    border: 2px solid #FF3B30;
+}
+
+.button-group button[type="button"]:hover {
+    background: #FF3B30;
+    color: white;
 }
 
 .button-group button[type="submit"] {
