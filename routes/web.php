@@ -29,4 +29,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions/categories', [TransactionController::class, 'getCategories']);
     Route::get('/api/transactions/chart-data/{timeFrame}', [DashboardController::class, 'getChartData']);
+    Route::get('/api/transactions', [TransactionController::class, 'getTransactions']);
 });

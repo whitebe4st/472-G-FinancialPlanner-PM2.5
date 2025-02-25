@@ -38,16 +38,25 @@ body {
     align-items: center;
     gap: 15px;
     padding: 10px;
-    border: 2px solid #D8D8D8;
+    border: 2px solid #71D881;
     border-radius: 10px;
     text-decoration: none;
-    color: #A0A0A0;
+    color: #262626;
     font-weight: 700;
     font-size: 20px;
 }
 
 .sideBar a:hover, .sideBar a.active {
-    background: #D8D8D8;
+    background: #71D881;
+    color: white;
+}
+
+/* Icon color change on hover/active */
+.sideBar a:hover svg path,
+.sideBar a:hover svg circle,
+.sideBar a.active svg path,
+.sideBar a.active svg circle {
+    stroke: white;  /* Make icons white on hover/active */
 }
 
 /* Header/Navbar Styles */
@@ -80,11 +89,11 @@ body {
     width: 100%;
     font-family: 'Jost', sans-serif;
     font-size: 12px;
-    color: #A0A0A0;
+    color: #262626;
 }
 
 .searchInput::placeholder {
-    color: #D8D8D8;
+    color: rgba(216, 216, 216, 0.8);
 }
 
 /* User Section Styles */
@@ -108,12 +117,12 @@ body {
 /* Main Content Styles */
 .container h1 {
     font-size: 32px;
-    color: #A0A0A0;
+    color: #262626;
     margin-bottom: 10px;
 }
 
 .container p {
-    color: #A0A0A0;
+    color: #262626;
     font-size: 16px;
     margin-bottom: 30px;
 }
@@ -124,6 +133,20 @@ body {
     padding: 20px;
     border: 2px solid #D8D8D8;
     border-radius: 40px;
+    animation: tableAppear 0.4s ease-out;
+    transform-origin: top center;
+}
+
+/* Animation keyframes for table container */
+@keyframes tableAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Table Styles */
@@ -144,14 +167,14 @@ table {
 
 /* Keep other table styles */
 .head-table {
-    background: #D8D8D8;
-    color: #A0A0A0;
+    background: rgba(113, 216, 129, 0.1);
+    color: #262626;
 }
 
 .table-container th, .table-container td {
     padding: 15px;
     text-align: left;
-    color: #A0A0A0;
+    color: #262626;
     font-weight: 600;
     font-size: 20px;
 }
@@ -166,7 +189,7 @@ table {
 .addBar-btn button {
     width: 40px;
     height: 40px;
-    background: #A0A0A0;
+    background: #71D881;
     border: none;
     border-radius: 50%;
     color: white;
@@ -197,36 +220,37 @@ table {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #A0A0A0;
+    color: #262626;
     background: none;
     border: none;
     cursor: pointer;
     font-family: 'Jost', sans-serif;
     font-size: 14px;
     transition: all 0.3s ease;
+    border-radius: 50%;
 }
 
 .page-btn:hover {
-    background: #D8D8D8;
+    background: rgba(113, 216, 129, 0.1);
     border-radius: 50%;
 }
 
 .page-btn.active {
-    background: #61646B;
-    color: #FFFFFF;
+    background: #71D881;
+    color: white;
     border-radius: 50%;
 }
 
 .page-nav {
-    color: #A0A0A0;
+    color: #595970;
 }
 
 .page-nav:hover {
-    color: #61646B;
+    color: #71D881;
 }
 
 .page-nav:disabled {
-    color: #D8D8D8;
+    color: rgba(89, 89, 112, 0.5);
     cursor: not-allowed;
 }
 
@@ -243,10 +267,10 @@ table {
     align-items: center;
     gap: 5px;
     padding: 5px 10px;
-    border: 2px solid #D8D8D8;
+    border: 2px solid #71D881;
     border-radius: 5px;
     background: white;
-    color: #A0A0A0;
+    color: #262626;
     cursor: pointer;
 }
 
@@ -315,14 +339,14 @@ table {
 .form-group label {
     display: block;
     margin-bottom: 5px;
-    color: #A0A0A0;
+    color: #262626;
     font-weight: 600;
 }
 
 .form-group input, .form-group select {
     width: 100%;
     padding: 8px;
-    border: 2px solid #D8D8D8;
+    border: 2px solid #71D881;
     border-radius: 10px;
     font-family: 'Jost', sans-serif;
 }
@@ -354,7 +378,7 @@ table {
 }
 
 .button-group button[type="submit"] {
-    background: #A0A0A0;
+    background: #71D881;
     color: white;
 }
 
@@ -439,4 +463,136 @@ table {
     padding: 10px 15px;
     color: #666;
     font-style: italic;
+}
+
+/* Logo Text */
+.logo span:last-child {
+    color: #262626;
+}
+
+/* Dropdown Text */
+.dropdown-content a {
+    color: #262626;
+}
+
+.dropdown-content a.selected {
+    color: #262626;
+}
+
+/* Keep existing table animations */
+#transactionTable table {
+    animation: fadeIn 0.2s ease;
+}
+
+#transactionTable tr {
+    animation: slideIn 0.2s ease;
+    animation-fill-mode: both;
+}
+
+/* Dark Mode Styles */
+:root {
+    --bg-color: #FFFFFF;
+    --text-color: #262626;
+    --border-color: #D8D8D8;
+    --hover-bg: rgba(113, 216, 129, 0.1);
+    --table-header-bg: rgba(113, 216, 129, 0.1);
+    --card-bg: #FFFFFF;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #FFFFFF;
+    --border-color: #333333;
+    --hover-bg: rgba(113, 216, 129, 0.2);
+    --table-header-bg: rgba(113, 216, 129, 0.15);
+    --card-bg: #242424;
+}
+
+/* Additional dark mode text color fixes */
+[data-theme="dark"] .container h1,
+[data-theme="dark"] .container p,
+[data-theme="dark"] .sideBar a,
+[data-theme="dark"] .logo span:last-child {
+    color: var(--text-color);
+}
+
+/* Dark mode logo handling */
+.logo-light {
+    display: block;
+}
+
+.logo-dark {
+    display: none;
+}
+
+[data-theme="dark"] .logo-light {
+    display: none;
+}
+
+[data-theme="dark"] .logo-dark {
+    display: block;
+}
+
+/* Apply variables */
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.container nav {
+    border-right: 2px solid var(--border-color);
+}
+
+.navBar {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-container {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.head-table {
+    background: var(--table-header-bg);
+}
+
+.table-container th, 
+.table-container td {
+    color: var(--text-color);
+}
+
+.searchBar {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.searchInput {
+    color: var(--text-color);
+    background: transparent;
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+    background: var(--hover-bg);
+}
+
+[data-theme="dark"] .sun {
+    display: none;
+}
+
+[data-theme="light"] .moon {
+    display: none;
 }

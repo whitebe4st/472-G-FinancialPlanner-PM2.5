@@ -12,7 +12,14 @@
     <div class="grid">
         <div class="container">
             <nav>
-                <h1 class="logo">Logo</h1>
+                <div class="logo" style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <img src="/images/logo.png" alt="Logo" class="logo-light" style="width: 60px; height: 60px; object-fit: contain;">
+                    <img src="/images/logo-darkmode.png" alt="Logo" class="logo-dark" style="width: 60px; height: 60px; object-fit: contain;">
+                    <div style="font-size: 1.2rem; font-weight: 600;">
+                        <span style="color: #71D881;">Financial</span>
+                        <span>Planner</span>
+                    </div>
+                </div>
                 <ul class="sideBar">
                     <li>
                         <a href="/dashboard" class="{{ Request::is('dashboard') ? 'active' : '' }}">
@@ -73,6 +80,15 @@
                     >
                 </div>
                 <div class="user">
+                    <button id="darkModeToggle" class="dark-mode-toggle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" class="moon">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                        </svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" class="sun">
+                            <circle cx="12" cy="12" r="5" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#A0A0A0" stroke-width="2"/>
+                        </svg>
+                    </button>
                     <a href="/notifications" class="notification-icon">
                         <img src="/images/NotificationIcon.png" alt="Notification">
                     </a>

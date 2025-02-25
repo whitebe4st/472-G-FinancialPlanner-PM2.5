@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -51,5 +52,40 @@ class TransactionController extends Controller
             ->pluck('category');
 
         return response()->json($categories);
+    }
+
+    public function getTransactions(Request $request)
+    {
+        $query = Transaction::where('user_id', Auth::id());
+
+        // Apply type filter
+        if ($request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        // Apply time filter
+        switch ($request->time) {
+            case 'today':
+                $query->whereDate('transaction_date', Carbon::today());
+                break;
+            case 'weekly':
+                $query->whereBetween('transaction_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'monthly':
+                $query->whereYear('transaction_date', Carbon::now()->year)
+                      ->whereMonth('transaction_date', Carbon::now()->month);
+                break;
+            case 'yearly':
+                $query->whereYear('transaction_date', Carbon::now()->year);
+                break;
+        }
+
+        // Apply sorting
+        $sortField = $request->sort === 'amount' ? 'amount' : 'transaction_date';
+        $sortOrder = $request->order === 'asc' ? 'asc' : 'desc';
+        $query->orderBy($sortField, $sortOrder);
+
+        // Return paginated results
+        return $query->paginate(10);
     }
 } 
