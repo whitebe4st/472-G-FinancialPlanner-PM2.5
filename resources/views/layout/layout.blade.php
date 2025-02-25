@@ -120,5 +120,6 @@
    
     </script>
     @stack('scripts')
+    <script src="{{ asset('js/bookmark.js') }}"></script>
 </body>
 </html>

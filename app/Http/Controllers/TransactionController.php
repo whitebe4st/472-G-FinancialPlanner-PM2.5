@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\BookmarkedTransaction;
 
 class TransactionController extends Controller
 {
@@ -87,5 +88,57 @@ class TransactionController extends Controller
 
         // Return paginated results
         return $query->paginate(10);
+    }
+
+    public function bookmarkTransaction(Request $request)
+    {
+        try {
+            if ($request->action === 'unbookmark') {
+                // Delete the bookmark
+                BookmarkedTransaction::where('user_id', Auth::id())
+                    ->where('description', $request->description)
+                    ->where('amount', $request->amount)
+                    ->where('type', $request->type)
+                    ->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaction unbookmarked successfully'
+                ]);
+            } else {
+                // Check if bookmark already exists
+                $exists = BookmarkedTransaction::where('user_id', Auth::id())
+                    ->where('description', $request->description)
+                    ->where('amount', $request->amount)
+                    ->where('type', $request->type)
+                    ->exists();
+
+                if (!$exists) {
+                    $bookmarked = BookmarkedTransaction::create([
+                        'user_id' => Auth::id(),
+                        'description' => $request->description,
+                        'default_date' => $request->date,
+                        'amount' => $request->amount,
+                        'type' => $request->type,
+                        'category' => $request->category,
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Transaction bookmarked successfully'
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction already bookmarked'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update bookmark: ' . $e->getMessage()
+            ], 500);
+        }
     }
 } 

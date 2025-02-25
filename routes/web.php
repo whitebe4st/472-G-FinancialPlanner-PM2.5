@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BookmarkController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,4 +31,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/categories', [TransactionController::class, 'getCategories']);
     Route::get('/api/transactions/chart-data/{timeFrame}', [DashboardController::class, 'getChartData']);
     Route::get('/api/transactions', [TransactionController::class, 'getTransactions']);
+    Route::post('/bookmark-transaction', [TransactionController::class, 'bookmarkTransaction'])->name('bookmark.transaction');
+    Route::get('/bookmark', [BookmarkController::class, 'index'])->name('bookmark.index');
 });

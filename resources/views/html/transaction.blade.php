@@ -375,14 +375,14 @@ function generateTableHTML(data) {
                 ${data.data.map((transaction, index) => `
                     <tr style="animation-delay: ${index * 0.05}s">
                         <td><input type="checkbox" class="row-checkbox"></td>
-                        <td>${transaction.description}</td>
+                        <td data-category="${transaction.category}">${transaction.description}</td>
                         <td>${new Date(transaction.transaction_date).toLocaleDateString()}</td>
                         <td>$${parseFloat(transaction.amount).toFixed(2)}</td>
-                        <td>${transaction.type === 'expense' ? 'Exp.' : 'Inc.'}</td>
+                        <td data-type="${transaction.type}">${transaction.type === 'expense' ? 'Exp.' : 'Inc.'}</td>
                         <td>${transaction.category}</td>
                         <td>
                             <svg width="24" height="24" viewBox="0 0 24 24">
-                                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"></path>
                             </svg>
                         </td>
                     </tr>
