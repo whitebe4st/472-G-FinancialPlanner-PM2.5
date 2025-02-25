@@ -99,5 +99,6 @@
     <script src='javascript/script.js'>
    
     </script>
+    @stack('scripts')
 </body>
 </html>

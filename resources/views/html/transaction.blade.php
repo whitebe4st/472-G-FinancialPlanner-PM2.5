@@ -5,82 +5,84 @@
 @endsection
 
 @section('content')
-<h1>Transactions</h1>
-                <p>Track your finances and achieve your financial goal.</p>
+<div class="content-wrapper" style="padding: 0 2rem;">
+    <h1 style="margin-bottom: 1rem;">Transactions</h1>
+    <p style="margin-bottom: 2rem;">Track your finances and achieve your financial goal.</p>
 
-                <div class="table-container">
-                    <div class="table-header">
-                        <h2>Transaction History</h2>
-                        <div class="filter-buttons">
-                            <button class="filter-btn">
-                                <svg width="24" height="24" viewBox="0 0 24 24">
-                                    <!-- Filter icon path -->
-                                    <path d="M4 4H20M8 12H16M10 20H14" stroke="#A0A0A0" stroke-width="2"/>
-                                </svg>
-                                Filter
-                            </button>
-                            <button class="filter-btn">
-                                <svg width="24" height="24" viewBox="0 0 24 24">
-                                    <!-- Calendar icon path -->
-                                    <rect x="4" y="4" width="16" height="16" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                                </svg>
-                                Yearly
-                            </button>
-                        </div>
-                    </div>
+    <div class="table-container" style="width: 95%; margin: 0 auto;">
+        <div class="table-header">
+            <h2>Transaction History</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <!-- Filter icon path -->
+                        <path d="M4 4H20M8 12H16M10 20H14" stroke="#A0A0A0" stroke-width="2"/>
+                    </svg>
+                    Filter
+                </button>
+                <button class="filter-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <!-- Calendar icon path -->
+                        <rect x="4" y="4" width="16" height="16" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                    </svg>
+                    Yearly
+                </button>
+            </div>
+        </div>
 
-                    <table>
-                        <thead class="head-table">
-                            <tr>
-                                <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
-                                <th>Transaction</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Type</th>
-                                <th>Category</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach(Auth::user()->transactions()->orderBy('transaction_date', 'desc')->get() as $transaction)
-                            <tr>
-                                <td><input type="checkbox" class="row-checkbox"></td>
-                                <td>{{ $transaction->description }}</td>
-                                <td>{{ $transaction->transaction_date->format('d/m/y') }}</td>
-                                <td>${{ number_format($transaction->amount, 2) }}</td>
-                                <td>{{ $transaction->type === 'expense' ? 'Exp.' : 'Inc.' }}</td>
-                                <td>{{ $transaction->category }}</td>
-                                <td>
-                                    <svg width="24" height="24" viewBox="0 0 24 24">
-                                        <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                                    </svg>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+        <table>
+            <thead class="head-table">
+                <tr>
+                    <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                    <th>Transaction</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(Auth::user()->transactions()->orderBy('transaction_date', 'desc')->get() as $transaction)
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>{{ $transaction->description }}</td>
+                    <td>{{ $transaction->transaction_date->format('d/m/y') }}</td>
+                    <td>${{ number_format($transaction->amount, 2) }}</td>
+                    <td>{{ $transaction->type === 'expense' ? 'Exp.' : 'Inc.' }}</td>
+                    <td>{{ $transaction->category }}</td>
+                    <td>
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                        </svg>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-                    <div class="addBar-btn">
-                        <button onclick="showAddTransactionPopup()">+</button>
-                    </div>
+        <div class="addBar-btn">
+            <button onclick="showAddTransactionPopup()">+</button>
+        </div>
 
-                    <div class="pagination">
-                        <button class="page-nav" data-page="prev">&lt;</button>
-                        <div class="page-numbers">
-                            <button class="page-btn" data-page="1">1</button>
-                            <button class="page-btn active" data-page="2">2</button>
-                            <button class="page-btn" data-page="3">3</button>
-                            <button class="page-btn" data-page="4">4</button>
-                            <button class="page-btn" data-page="5">5</button>
-                            <button class="page-btn" data-page="6">6</button>
-                            <button class="page-btn" data-page="7">7</button>
-                            <button class="page-btn" data-page="8">8</button>
-                            <button class="page-btn" data-page="9">9</button>
-                            <button class="page-btn" data-page="10">10</button>
-                        </div>
-                        <button class="page-nav" data-page="next">&gt;</button>
-                    </div>
-                </div>
+        <div class="pagination">
+            <button class="page-nav" data-page="prev">&lt;</button>
+            <div class="page-numbers">
+                <button class="page-btn" data-page="1">1</button>
+                <button class="page-btn active" data-page="2">2</button>
+                <button class="page-btn" data-page="3">3</button>
+                <button class="page-btn" data-page="4">4</button>
+                <button class="page-btn" data-page="5">5</button>
+                <button class="page-btn" data-page="6">6</button>
+                <button class="page-btn" data-page="7">7</button>
+                <button class="page-btn" data-page="8">8</button>
+                <button class="page-btn" data-page="9">9</button>
+                <button class="page-btn" data-page="10">10</button>
+            </div>
+            <button class="page-nav" data-page="next">&gt;</button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('addTransactionPopup')
