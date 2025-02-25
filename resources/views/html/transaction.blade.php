@@ -443,49 +443,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @section('addTransactionPopup')
 <div class="popup-content">
-            <h2>Add Transaction</h2>
-            <form id="transactionForm">
-                @csrf
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" name="description" required>
-                </div>
-                <div class="form-group">
-                    <label for="amount">Amount</label>
-                    <input type="number" id="amount" name="amount" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="type">Type</label>
-                    <select id="type" name="type" required>
-                        <option value="expense">Expense</option>
-                        <option value="income">Income</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <div class="category-input-container">
-                        <input 
-                            type="text" 
-                            id="category" 
-                            name="category" 
-                            list="categories" 
-                            autocomplete="off"
-                            required
-                            oninput="filterCategories(this.value)"
-                        >
-                        <div id="categoryDropdown" class="category-dropdown">
-                            <!-- Categories will be populated here -->
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="transaction_date">Date</label>
-                    <input type="date" id="transaction_date" name="transaction_date" required>
-                </div>
-                <div class="button-group">
-                    <button type="button" onclick="hideAddTransactionPopup()">Cancel</button>
-                    <button type="submit">Add</button>
-                </div>
-            </form>
+    <div class="popup-header">
+        <h2>Add Transaction</h2>
+        <button onclick="hideAddTransactionPopup()">&times;</button>
+    </div>
+    
+    <div class="form-actions">
+        <button type="button" class="btn-bookmark" onclick="showBookmarkSelectionModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            Add from Bookmark
+        </button>
+    </div>
+
+    <form id="transactionForm">
+        @csrf
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" required>
         </div>
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" name="amount" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label for="type">Type</label>
+            <select id="type" name="type" required>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="category">Category</label>
+            <div class="category-input-container">
+                <input 
+                    type="text" 
+                    id="category" 
+                    name="category" 
+                    list="categories" 
+                    autocomplete="off"
+                    required
+                    oninput="filterCategories(this.value)"
+                >
+                <div id="categoryDropdown" class="category-dropdown">
+                    <!-- Categories will be populated here -->
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="transaction_date">Date</label>
+            <input type="date" id="transaction_date" name="transaction_date" required>
+        </div>
+        <div class="button-group">
+            <button type="button" onclick="hideAddTransactionPopup()">Cancel</button>
+            <button type="submit">Add</button>
+        </div>
+    </form>
+</div>
+
 @endsection

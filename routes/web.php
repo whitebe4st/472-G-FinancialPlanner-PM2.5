@@ -33,4 +33,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/transactions', [TransactionController::class, 'getTransactions']);
     Route::post('/bookmark-transaction', [TransactionController::class, 'bookmarkTransaction'])->name('bookmark.transaction');
     Route::get('/bookmark', [BookmarkController::class, 'index'])->name('bookmark.index');
+    Route::post('/api/add-bookmarked-transactions', [TransactionController::class, 'addFromBookmarks'])->name('transactions.add-from-bookmarks');
+    Route::get('/api/bookmarks', [BookmarkController::class, 'getBookmarks'])->name('bookmarks.get');
 });

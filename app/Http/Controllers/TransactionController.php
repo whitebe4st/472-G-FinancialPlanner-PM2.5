@@ -141,4 +141,41 @@ class TransactionController extends Controller
             ], 500);
         }
     }
+
+    public function addFromBookmarks(Request $request)
+    {
+        $request->validate([
+            'bookmark_ids' => 'required|array',
+            'bookmark_ids.*' => 'exists:bookmarked_transactions,id',
+            'transaction_date' => 'required|date'
+        ]);
+
+        try {
+            $bookmarks = BookmarkedTransaction::whereIn('id', $request->bookmark_ids)
+                ->where('user_id', Auth::id())
+                ->get();
+
+            foreach ($bookmarks as $bookmark) {
+                Transaction::create([
+                    'user_id' => Auth::id(),
+                    'description' => $bookmark->description,
+                    'amount' => $bookmark->amount,
+                    'type' => $bookmark->type,
+                    'category' => $bookmark->category,
+                    'transaction_date' => $request->transaction_date,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transactions added successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add transactions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 

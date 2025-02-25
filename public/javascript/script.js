@@ -158,3 +158,127 @@ darkModeToggle.addEventListener('click', () => {
     htmlElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
 });
+
+function showBookmarkSelectionModal() {
+    const addTransactionPopup = document.getElementById('addTransactionPopup');
+    const bookmarkModal = document.getElementById('bookmarkSelectionModal');
+    
+    if (!addTransactionPopup || !bookmarkModal) {
+        console.error('Modal elements not found');
+        return;
+    }
+    
+    // Hide transaction popup
+    addTransactionPopup.style.display = 'none';
+    
+    // Show and setup bookmark modal
+    bookmarkModal.style.display = 'flex';
+    bookmarkModal.classList.add('active');
+    loadBookmarkedTransactions();
+}
+
+function hideBookmarkSelectionModal() {
+    const bookmarkModal = document.getElementById('bookmarkSelectionModal');
+    const addTransactionPopup = document.getElementById('addTransactionPopup');
+    
+    if (!bookmarkModal || !addTransactionPopup) {
+        console.error('Modal elements not found');
+        return;
+    }
+    
+    // Hide and reset bookmark modal
+    bookmarkModal.style.display = 'none';
+    bookmarkModal.classList.remove('active');
+    
+    // Show transaction popup
+    addTransactionPopup.style.display = 'flex';
+}
+
+function loadBookmarkedTransactions() {
+    console.log('Loading bookmarks'); // Debug log
+    const tbody = document.getElementById('bookmarkTableBody');
+    if (!tbody) {
+        console.error('Bookmark table body not found'); // Debug log
+        return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading bookmarks...</td></tr>';
+
+    fetch('/api/bookmarks')
+        .then(response => {
+            console.log('Bookmark API response:', response.status); // Debug log
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(bookmarks => {
+            console.log('Bookmarks loaded:', bookmarks); // Debug log
+            if (bookmarks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No bookmarks found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = bookmarks.map(bookmark => `
+                <tr>
+                    <td><input type="checkbox" class="bookmark-checkbox" value="${bookmark.id}"></td>
+                    <td>${bookmark.description}</td>
+                    <td>$${parseFloat(bookmark.amount).toFixed(2)}</td>
+                    <td>
+                        <span class="${bookmark.type === 'income' ? 'income' : 'expense'}">
+                            ${bookmark.type === 'income' ? 'Inc.' : 'Exp.'}
+                        </span>
+                    </td>
+                    <td>${bookmark.category}</td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading bookmarks:', error);
+            tbody.innerHTML = '<tr><td colspan="5" class="error">Failed to load bookmarks</td></tr>';
+        });
+}
+
+function toggleAllBookmarks() {
+    const mainCheckbox = document.getElementById('selectAllBookmarks');
+    const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = mainCheckbox.checked);
+}
+
+function addSelectedBookmarks() {
+    const checkboxes = document.querySelectorAll('.bookmark-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+        alert('Please select at least one bookmark');
+        return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    fetch('/api/add-bookmarked-transactions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            bookmark_ids: selectedIds,
+            transaction_date: today
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideBookmarkSelectionModal();
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to add transactions');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add transactions');
+    });
+}

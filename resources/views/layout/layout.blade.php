@@ -115,6 +115,40 @@
         @yield('addTransactionPopup')
     </div>
 
+    <!-- Add this new modal -->
+    <div id="bookmarkSelectionModal" class="popup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h2>Select Bookmarks</h2>
+                <button type="button" class="close-button" onclick="hideBookmarkSelectionModal()">&times;</button>
+            </div>
+            
+            <div class="bookmark-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">
+                                <input type="checkbox" id="selectAllBookmarks" onclick="toggleAllBookmarks()">
+                            </th>
+                            <th style="width: 25%">Transaction</th>
+                            <th style="width: 20%">Amount</th>
+                            <th style="width: 15%">Type</th>
+                            <th style="width: 35%">Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookmarkTableBody">
+                        <!-- Will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="popup-footer">
+                <button type="button" class="btn-secondary" onclick="hideBookmarkSelectionModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="addSelectedBookmarks()">Add to Transaction</button>
+            </div>
+        </div>
+    </div>
+
     
     
     <script src='javascript/script.js'>

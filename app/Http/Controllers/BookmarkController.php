@@ -30,4 +30,20 @@ class BookmarkController extends Controller
         
         return view('html.bookmark', compact('bookmarkedTransactions'));
     }
+
+    public function getBookmarks()
+    {
+        try {
+            $bookmarks = BookmarkedTransaction::where('user_id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json($bookmarks);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch bookmarks: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 
