@@ -700,3 +700,84 @@ body {
 [data-theme="dark"] .head-table th {
     border-color: rgba(113, 216, 129, 0.2);  /* Slightly visible header border in dark mode */
 }
+
+/* Bookmark button styling */
+.bookmark-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG bookmark icon specific styling */
+.bookmark-btn svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.bookmark-btn:hover svg path {
+    stroke: #71D881;
+    fill: #71D881;
+}
+
+/* Active/bookmarked state */
+.bookmark-btn.active svg path {
+    stroke: #71D881;
+    fill: #71D881;
+}
+
+/* Sidebar bookmark icon */
+.sideBar a svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect - fill the icon */
+.sideBar a:hover svg path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Active state - keep it filled */
+.sideBar a.active svg path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Make sure icon is white when button background is green */
+.sideBar a:hover svg path,
+.sideBar a.active svg path {
+    fill: white;
+    stroke: white;
+}
+
+/* Table bookmark icon */
+#transactionTable td svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Hover effect - fill the icon */
+#transactionTable td svg:hover path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Active/bookmarked state */
+#transactionTable td svg.active path {
+    fill: #71D881;
+    stroke: #71D881;
+}
