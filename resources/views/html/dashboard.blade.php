@@ -36,12 +36,12 @@
                     <option value="yearly">Yearly</option>
                 </select>
             </div>
-            <div style="position: relative; height: 300px;">
+            <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
                 <canvas id="transactionChart"></canvas>
             </div>
         </div>
 
-        <!-- Transaction Today -->
+        <!-- Today's Transactions -->
         <div class="today-transactions" style="flex: 1; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto;">
             <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Transaction Today</h2>
             <table style="width: 100%; border-collapse: collapse;">
@@ -70,95 +70,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-window.addEventListener('DOMContentLoaded', function() {
-    const chartElement = document.getElementById('transactionChart');
-    let chart = null;
-    
-    // Initial chart data
-    const chartData = {
-        monthly: {
-            labels: {{ Js::from($chartLabels) }},
-            incomeData: {{ Js::from($chartIncomeData) }},
-            expenseData: {{ Js::from($chartExpenseData) }}
-        }
-    };
-
-    function createChart(data) {
-        if (chart) {
-            chart.destroy();
-        }
-
-        const ctx = chartElement.getContext('2d');
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Income',
-                    data: data.incomeData,
-                    borderColor: '#28a745',
-                    tension: 0.4,
-                    fill: false
-                },
-                {
-                    label: 'Expense',
-                    data: data.expenseData,
-                    borderColor: '#dc3545',
-                    tension: 0.4,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Create initial chart
-    if (chartElement) {
-        createChart(chartData.monthly);
-
-        // Add event listener for filter changes
-        document.getElementById('timeFilter').addEventListener('change', function(e) {
-            const timeFrame = e.target.value;
-            
-            // Fetch data for the selected time frame
-            fetch(`/api/transactions/chart-data/${timeFrame}`)
-                .then(response => response.json())
-                .then(data => {
-                    chartData[timeFrame] = data;
-                    createChart(data);
-                })
-                .catch(error => console.error('Error fetching chart data:', error));
-        });
-    }
-});
-</script>
 @endpush
 @endsection
 

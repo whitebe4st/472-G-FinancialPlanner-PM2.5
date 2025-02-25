@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js"></script>
 </head>
 <body>
     <div class="grid">
@@ -121,5 +122,8 @@
     </script>
     @stack('scripts')
     <script src="{{ asset('js/bookmark.js') }}"></script>
+    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ asset('js/loading.js') }}"></script>
 </body>
 </html>

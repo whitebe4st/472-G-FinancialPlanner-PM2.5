@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -75,72 +76,67 @@ class DashboardController extends Controller
 
     public function getChartData($timeFrame)
     {
-        $user = Auth::user();
-        $chartData = [
-            'labels' => [],
-            'incomeData' => [],
-            'expenseData' => []
-        ];
+        $query = Transaction::where('user_id', Auth::id());
         
-        switch($timeFrame) {
+        // Set the date range based on timeFrame
+        switch ($timeFrame) {
             case 'weekly':
-                // Last 7 days
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = Carbon::now()->subDays($i);
-                    $chartData['labels'][] = $date->format('D');
-                    
-                    $chartData['incomeData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'income')
-                        ->whereDate('transaction_date', $date)
-                        ->sum('amount');
-                        
-                    $chartData['expenseData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'expense')
-                        ->whereDate('transaction_date', $date)
-                        ->sum('amount');
-                }
+                $startDate = Carbon::now()->startOfWeek();
+                $endDate = Carbon::now()->endOfWeek();
+                $groupBy = 'date';
                 break;
-                
             case 'yearly':
-                // Last 12 months
-                for ($i = 11; $i >= 0; $i--) {
-                    $date = Carbon::now()->subMonths($i);
-                    $chartData['labels'][] = $date->format('M Y');
-                    
-                    $chartData['incomeData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'income')
-                        ->whereYear('transaction_date', $date->year)
-                        ->whereMonth('transaction_date', $date->month)
-                        ->sum('amount');
-                        
-                    $chartData['expenseData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'expense')
-                        ->whereYear('transaction_date', $date->year)
-                        ->whereMonth('transaction_date', $date->month)
-                        ->sum('amount');
-                }
+                $startDate = Carbon::now()->startOfYear();
+                $endDate = Carbon::now()->endOfYear();
+                $groupBy = 'month';
                 break;
-                
-            default: // monthly
-                // Last 6 months (keep existing logic)
-                for ($i = 5; $i >= 0; $i--) {
-                    $date = Carbon::now()->subMonths($i);
-                    $chartData['labels'][] = $date->format('M Y');
-                    
-                    $chartData['incomeData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'income')
-                        ->whereYear('transaction_date', $date->year)
-                        ->whereMonth('transaction_date', $date->month)
-                        ->sum('amount');
-                        
-                    $chartData['expenseData'][] = Transaction::where('user_id', $user->user_id)
-                        ->where('type', 'expense')
-                        ->whereYear('transaction_date', $date->year)
-                        ->whereMonth('transaction_date', $date->month)
-                        ->sum('amount');
-                }
+            case 'monthly':
+            default:
+                $startDate = Carbon::now()->startOfMonth();
+                $endDate = Carbon::now()->endOfMonth();
+                $groupBy = 'date';
+                break;
         }
+
+        // Get income data
+        $incomeData = $query->clone()
+            ->where('type', 'income')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
+            ->groupBy('date')
+            ->get()
+            ->pluck('total', 'date')
+            ->toArray();
+
+        // Get expense data
+        $expenseData = $query->clone()
+            ->where('type', 'expense')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
+            ->groupBy('date')
+            ->get()
+            ->pluck('total', 'date')
+            ->toArray();
+
+        // Generate date range
+        $dates = [];
+        $income = [];
+        $expense = [];
         
-        return response()->json($chartData);
+        $currentDate = clone $startDate;
+        while ($currentDate <= $endDate) {
+            $dateKey = $currentDate->format('Y-m-d');
+            $dates[] = $currentDate->format('M d'); // Format for display
+            $income[] = $incomeData[$dateKey] ?? 0;
+            $expense[] = $expenseData[$dateKey] ?? 0;
+            
+            $currentDate->addDay();
+        }
+
+        return response()->json([
+            'labels' => $dates,
+            'income' => $income,
+            'expense' => $expense
+        ]);
     }
 } 

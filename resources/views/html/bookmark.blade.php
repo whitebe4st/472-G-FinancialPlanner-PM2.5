@@ -13,18 +13,22 @@
         <div class="transaction-header">
             <h2 class="transaction-title">Bookmark</h2>
             <div class="transaction-actions">
-                <button class="filter-button">
-                    <svg width="24" height="24" viewBox="0 0 24 24">
-                        <path d="M4 4H20M8 12H16M10 20H14" stroke="#A0A0A0" stroke-width="2"/>
-                    </svg>
-                    Filter
-                </button>
-                <button class="year-button">
-                    <span>Yearly</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24">
-                        <path d="M6 9L12 15L18 9" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                    </svg>
-                </button>
+                <div class="dropdown">
+                    <button class="filter-button">
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <path d="M4 4H20M8 12H16M10 20H14" stroke="#A0A0A0" stroke-width="2"/>
+                        </svg>
+                        <span>Filter</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <path d="M6 9L12 15L18 9" stroke="#A0A0A0" stroke-width="2" fill="none"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="#" data-filter="all">All</a>
+                        <a href="#" data-filter="income">Income</a>
+                        <a href="#" data-filter="expense">Expense</a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -55,31 +59,57 @@
             @endforeach
         </table>
 
-        <div class="table-actions">
-            <button class="action-btn items-btn">
-                <span class="count">0</span> Items
-            </button>
-            <button class="action-btn edit-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M11 4H4V20H20V13" stroke="#A0A0A0" stroke-width="2"/>
-                    <path d="M18 5L21 8L12 17H9V14L18 5Z" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                </svg>
-                Edit
-            </button>
-            <button class="action-btn remove-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M4 7H20M10 11V17M14 11V17M5 7L6 19C6 19.5304 6.21071 20.0391 6.58579 20.4142C6.96086 20.7893 7.46957 21 8 21H16C16.5304 21 17.0391 20.7893 17.4142 20.4142C17.7893 20.0391 18 19.5304 18 19L19 7M9 7V4C9 3.73478 9.10536 3.48043 9.29289 3.29289C9.48043 3.10536 9.73478 3 10 3H14C14.2652 3 14.5196 3.10536 14.7071 3.29289C14.8946 3.48043 15 3.73478 15 4V7" stroke="#A0A0A0" stroke-width="2" fill="none"/>
-                </svg>
-                Remove
-            </button>
-            <button class="action-btn close-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="#A0A0A0" stroke-width="2"/>
-                </svg>
-            </button>
+        <div class="pagination-wrapper">
+            {{ $bookmarkedTransactions->links() }}
         </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .pagination-wrapper {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        gap: 0.5rem;
+    }
+
+    .pagination li {
+        display: flex;
+    }
+
+    .pagination li a,
+    .pagination li span {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .pagination li.active span {
+        background: #71D881;
+        color: white;
+        border-color: #71D881;
+    }
+
+    .pagination li a:hover {
+        background: var(--hover-bg);
+    }
+
+    [data-theme="dark"] .pagination li a,
+    [data-theme="dark"] .pagination li span {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+@endpush
 
 
