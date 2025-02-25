@@ -146,12 +146,12 @@ class TransactionController extends Controller
     {
         $request->validate([
             'bookmark_ids' => 'required|array',
-            'bookmark_ids.*' => 'exists:bookmarked_transactions,id',
+            'bookmark_ids.*' => 'exists:bookmarked_transactions,bookmark_id',
             'transaction_date' => 'required|date'
         ]);
 
         try {
-            $bookmarks = BookmarkedTransaction::whereIn('id', $request->bookmark_ids)
+            $bookmarks = BookmarkedTransaction::whereIn('bookmark_id', $request->bookmark_ids)
                 ->where('user_id', Auth::id())
                 ->get();
 

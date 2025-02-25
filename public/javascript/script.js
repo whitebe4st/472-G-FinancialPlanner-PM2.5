@@ -195,10 +195,9 @@ function hideBookmarkSelectionModal() {
 }
 
 function loadBookmarkedTransactions() {
-    console.log('Loading bookmarks'); // Debug log
     const tbody = document.getElementById('bookmarkTableBody');
     if (!tbody) {
-        console.error('Bookmark table body not found'); // Debug log
+        console.error('Bookmark table body not found');
         return;
     }
 
@@ -206,14 +205,12 @@ function loadBookmarkedTransactions() {
 
     fetch('/api/bookmarks')
         .then(response => {
-            console.log('Bookmark API response:', response.status); // Debug log
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(bookmarks => {
-            console.log('Bookmarks loaded:', bookmarks); // Debug log
             if (bookmarks.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center">No bookmarks found</td></tr>';
                 return;
@@ -221,7 +218,7 @@ function loadBookmarkedTransactions() {
 
             tbody.innerHTML = bookmarks.map(bookmark => `
                 <tr>
-                    <td><input type="checkbox" class="bookmark-checkbox" value="${bookmark.id}"></td>
+                    <td><input type="checkbox" class="bookmark-checkbox" value="${bookmark.bookmark_id}"></td>
                     <td>${bookmark.description}</td>
                     <td>$${parseFloat(bookmark.amount).toFixed(2)}</td>
                     <td>

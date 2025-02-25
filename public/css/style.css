@@ -355,7 +355,8 @@ table {
     width: 90%;
     max-width: 800px;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group {
@@ -928,9 +929,10 @@ body {
 }
 
 .bookmark-table {
-    margin: 1rem 0;
-    max-height: 400px;
+    flex: 1;
     overflow-y: auto;
+    margin: 1rem 0;
+    min-height: 200px; /* Ensure minimum height for content */
 }
 
 .bookmark-table table {
@@ -946,12 +948,25 @@ body {
 }
 
 .popup-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+    z-index: 2;
+}
+
+.btn-primary,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    z-index: 3;
 }
 
 /* Add specific styles for bookmark modal */
@@ -960,9 +975,10 @@ body {
     padding: 2rem;
     border-radius: 8px;
     width: 90%;
-    max-width: 800px; /* Wider than transaction modal */
+    max-width: 800px;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 #bookmarkSelectionModal table {
@@ -979,21 +995,25 @@ body {
 }
 
 #bookmarkSelectionModal .popup-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+    z-index: 2;
 }
 
-#bookmarkSelectionModal .btn-primary {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
+#bookmarkSelectionModal .btn-primary,
+#bookmarkSelectionModal .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    z-index: 3;
 }
 
 #bookmarkSelectionModal .loading,
