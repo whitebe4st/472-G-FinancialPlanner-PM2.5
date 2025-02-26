@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turbolinks/5.2.0/turbolinks.js" defer></script>
+    <script src="{{ asset('javascript/script.js') }}" defer></script>
 </head>
 <body>
     <div class="grid">
@@ -25,6 +26,13 @@
                         <span>Planner</span>
                     </div>
                 </div>
+                
+                <!-- Add this clock and calendar div -->
+                <div class="datetime-display">
+                    <div class="time" id="clock"></div>
+                    <div class="date" id="calendar"></div>
+                </div>
+
                 <ul class="sideBar">
                     <li>
                         <a href="/dashboard" class="{{ Request::is('dashboard') ? 'active' : '' }}">

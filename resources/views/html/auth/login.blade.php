@@ -11,7 +11,7 @@
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <h1>Logo</h1>
+            <img src="/images/logo.png" alt="Logo" class="logo">
             <p class="subtitle">Welcome back! Please login to your account.</p>
             
             <form class="auth-form" action="/login" method="POST">
@@ -27,7 +27,7 @@
                     <div class="password-input">
                         <input type="password" id="password" name="password" required>
                         <button type="button" class="toggle-password">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A0A0A0">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M12 4C4 4 1 12 1 12C1 12 4 20 12 20C20 20 23 12 23 12C23 12 20 4 12 4Z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
@@ -58,16 +58,17 @@
             const password = document.querySelector('#password');
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
+            
+            // Update icon based on password visibility
+            this.querySelector('svg').style.stroke = type === 'password' ? '#A0A0A0' : '#4CAF50';
         });
 
         document.querySelector('.google-btn').addEventListener('click', function(e) {
             e.preventDefault();
             this.classList.add('clicked');
-            
-            // Wait for animation to complete + 1 second before redirecting
             setTimeout(() => {
-                window.location.href = 'your-google-login-url';
-            }, 1500); // 500ms for animation + 1000ms hold
+                window.location.href = '/auth/google';
+            }, 1500);
         });
     </script>
 </body>

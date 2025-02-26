@@ -141,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Failed to add transaction');
         });
     });
+
+    updateDateTime();
 });
 
 // Dark mode toggle functionality
@@ -279,3 +281,76 @@ function addSelectedBookmarks() {
         alert('Failed to add transactions');
     });
 }
+
+function updateDateTime() {
+    const clockElement = document.getElementById('clock');
+    const calendarElement = document.getElementById('calendar');
+    
+    function update() {
+        const now = new Date();
+        
+        // Update clock
+        clockElement.textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Update calendar
+        calendarElement.textContent = now.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+    
+    // Update immediately and then every second
+    update();
+    setInterval(update, 1000);
+}
+
+document.addEventListener("turbolinks:load", function() {
+    // Initialize clock and calendar
+    initializeDateTime();
+});
+
+function initializeDateTime() {
+    const clockElement = document.getElementById('clock');
+    const calendarElement = document.getElementById('calendar');
+    
+    if (!clockElement || !calendarElement) return;
+    
+    // Clear any existing intervals
+    if (window.clockInterval) {
+        clearInterval(window.clockInterval);
+    }
+    
+    function updateTime() {
+        const now = new Date();
+        
+        // Update clock
+        clockElement.textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Update calendar
+        calendarElement.textContent = now.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+    
+    // Update immediately
+    updateTime();
+    
+    // Store interval ID globally
+    window.clockInterval = setInterval(updateTime, 1000);
+}
+
+// Cleanup on page unload
+document.addEventListener("turbolinks:before-cache", function() {
+    if (window.clockInterval) {
+        clearInterval(window.clockInterval);
+    }
+});
