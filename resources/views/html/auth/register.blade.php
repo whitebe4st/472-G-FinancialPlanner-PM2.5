@@ -10,7 +10,13 @@
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <h1>Logo</h1>
+            <div class="logo" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; margin-bottom: 1rem;">
+                <img src="/images/logo.png" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;">
+                <div style="font-size: 1.2rem; font-weight: 600;">
+                    <span style="color: #71D881;">Financial</span>
+                    <span>Planner</span>
+                </div>
+            </div>
             <p class="subtitle">Create your account to start planning.</p>
             
             <form class="auth-form" action="/register" method="POST">
