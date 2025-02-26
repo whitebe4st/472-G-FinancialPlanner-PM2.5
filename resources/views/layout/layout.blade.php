@@ -27,11 +27,8 @@
                     </div>
                 </div>
                 
-                <!-- Add this clock and calendar div -->
-                <div class="datetime-display">
-                    <div class="time" id="clock"></div>
-                    <div class="date" id="calendar"></div>
-                </div>
+              
+
 
                 <ul class="sideBar">
                     <li>
