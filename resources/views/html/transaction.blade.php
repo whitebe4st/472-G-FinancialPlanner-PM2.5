@@ -75,182 +75,28 @@
             <button onclick="showAddTransactionPopup()">+</button>
         </div>
         <div id="action-bar" class="action-bar hidden">
-        <span id="selected-count">0 Items</span>
-        <button class="edit-btn">✏ Edit</button>
-        <button class="bookmark-btn">🔖 Bookmark</button>
-        <button class="remove-btn">🗑 Remove</button>
-    </div>
-
+            <span id="selected-count">0 Items</span>
+            <button class="edit-btn" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                </svg>
+                Edit
+            </button>
+            <button class="bookmark-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                Bookmark
+            </button>
+            <button class="remove-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                </svg>
+                Remove
+            </button>
+        </div>
     </div>
 </div>
-
-<style>
-.dropdown-content {
-    padding: 0.5rem 0;
-    transform-origin: top;
-    transform: scaleY(0);
-    transition: all 0.2s ease-in-out;
-    opacity: 0;
-}
-
-.dropdown-content.show {
-    transform: scaleY(1);
-    opacity: 1;
-}
-
-.dropdown-content a {
-    padding: 0.5rem 1rem;
-    text-decoration: none;
-    color: #333;
-    display: block;
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.dropdown-content a:hover {
-    background-color: #f5f5f5;
-    padding-left: 1.5rem;
-}
-
-.dropdown-content a.selected {
-    background-color: #f0f0f0;
-    font-weight: 500;
-    color: #000;
-}
-
-.dropdown-content a.selected::after {
-    content: "✓";
-    position: absolute;
-    right: 1rem;
-    color: #28a745;
-    opacity: 0;
-    animation: fadeIn 0.3s ease forwards;
-}
-
-.filter-btn {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.filter-btn:hover {
-    background: #f5f5f5;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.filter-btn.active {
-    background: #f0f0f0;
-    border-color: #ccc;
-}
-
-.addBar-btn button {
-    transition: all 0.3s ease;
-}
-
-.addBar-btn button:hover {
-    transform: rotate(90deg);
-}
-
-/* Table animations */
-#transactionTable table {
-    animation: fadeIn 0.5s ease;
-}
-
-#transactionTable tr {
-    animation: slideIn 0.3s ease;
-}
-
-/* Pagination animations */
-.pagination button {
-    transition: all 0.2s ease;
-}
-
-.pagination button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.pagination button.active {
-    transform: scale(1.1);
-}
-
-/* Animation keyframes */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes scaleIn {
-    from {
-        transform: scale(0.95);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 0.5rem 0;
-    animation: expandWidth 0.3s ease;
-}
-
-@keyframes expandWidth {
-    from {
-        width: 0;
-    }
-    to {
-        width: 100%;
-    }
-}
-
-/* Loading animation styles */
-#loadingAnimation {
-    animation: fadeIn 0.2s ease;
-}
-
-.spinner {
-    opacity: 0.7;
-}
-
-/* Table container transition */
-#transactionTable {
-    min-height: 200px;
-    transition: opacity 0.2s ease;
-}
-
-/* Optimize table animation */
-#transactionTable table {
-    animation: fadeIn 0.2s ease;
-}
-
-#transactionTable tr {
-    animation: slideIn 0.2s ease;
-    animation-fill-mode: both;
-}
-
-</style>
 
 @push('scripts')
 <script>
@@ -267,7 +113,6 @@ function toggleDropdown(id) {
     const allDropdowns = document.getElementsByClassName('dropdown-content');
     const button = dropdown.previousElementSibling;
     
-    // Close all other dropdowns and remove active state
     Array.from(allDropdowns).forEach(d => {
         if (d.id !== id) {
             d.classList.remove('show');
@@ -276,7 +121,6 @@ function toggleDropdown(id) {
         }
     });
     
-    // Toggle current dropdown
     if (dropdown.style.display === 'none') {
         dropdown.style.display = 'block';
         setTimeout(() => dropdown.classList.add('show'), 0);
@@ -460,111 +304,7 @@ document.addEventListener('click', function(event) {
 document.addEventListener('DOMContentLoaded', function() {
     loadTransactions();
     updateSelectedStates();
-});
-
-function updateActionBar() {
-    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-    const actionBar = document.getElementById('action-bar');
-    const selectedCount = document.getElementById('selected-count');
-    const editBtn = document.querySelector('.edit-btn');
-
-    // ลบ event listener เก่าออกก่อน
-    editBtn.removeEventListener('click', handleEditClick);
-
-    if (selectedCheckboxes.length > 0) {
-        actionBar.classList.remove('hidden');
-        selectedCount.textContent = `${selectedCheckboxes.length} Items`;
-        
-        // Enable/disable edit button based on selection count
-        if (selectedCheckboxes.length === 1) {
-            editBtn.disabled = false;
-            // เพิ่ม event listener ใหม่
-            editBtn.addEventListener('click', handleEditClick);
-        } else {
-            editBtn.disabled = true;
-        }
-    } else {
-        actionBar.classList.add('hidden');
-    }
-}
-
-// แยกฟังก์ชันสำหรับจัดการการคลิกปุ่ม edit
-function handleEditClick() {
-    const selectedCheckbox = document.querySelector('.row-checkbox:checked');
-    if (selectedCheckbox) {
-        const transactionId = selectedCheckbox.getAttribute('data-id');
-        editTransaction(transactionId);
-    }
-}
-
-function editTransaction(transactionId) {
-    console.log('Editing transaction with ID:', transactionId); // เพิ่ม debug log
-
-    if (!transactionId) {
-        console.error('Transaction ID is missing!'); // เพิ่ม debug log
-        alert('Invalid transaction ID!');
-        return;
-    }
-
-    // Fetch transaction data
-    fetch(`/api/transactions/${transactionId}`)
-        .then(response => {
-            console.log('API Response:', response); // เพิ่ม debug log
-            return response.json();
-        })
-        .then(data => {
-            console.log('Transaction data:', data); // เพิ่ม debug log
-            if (data.success) {
-                const transaction = data.data;
-                
-                // Populate edit form
-                document.getElementById('edit_id').value = transaction.id;
-                document.getElementById('edit_description').value = transaction.description;
-                document.getElementById('edit_amount').value = transaction.amount;
-                document.getElementById('edit_type').value = transaction.type;
-                document.getElementById('edit_category').value = transaction.category;
-                document.getElementById('edit_transaction_date').value = transaction.transaction_date;
-                
-                // Show edit popup
-                document.getElementById('editTransactionPopup').style.display = 'block';
-            } else {
-                alert('Error loading transaction data!');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading transaction data!');
-        });
-}
-
-function hideEditTransactionPopup() {
-    document.getElementById('editTransactionPopup').style.display = 'none';
-}
-
-// Add event listener for edit form submission
-document.getElementById('editTransactionForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const transactionId = document.getElementById('edit_id').value;
-    
-    fetch(`/api/transactions/${transactionId}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            hideEditTransactionPopup();
-            loadTransactions(); // Reload the table
-        } else {
-            alert('Error updating transaction!');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error updating transaction!');
-    });
+    initializeEventListeners();
 });
 </script>
 @endpush

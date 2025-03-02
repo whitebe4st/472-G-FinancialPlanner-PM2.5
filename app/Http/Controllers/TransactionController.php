@@ -196,20 +196,25 @@ class TransactionController extends Controller
 
     public function show($id)
     {
-        // ✅ ค้นหา Transaction ตาม ID และต้องเป็นของผู้ใช้ที่ล็อกอินอยู่
-        $transaction = Transaction::where('user_id', Auth::id())->find($id);
-    
-        // ✅ Log ข้อมูลเพื่อ Debug
+        // ค้นหา Transaction ตาม ID และต้องเป็นของผู้ใช้ที่ล็อกอินอยู่
+        $transaction = Transaction::where('user_id', Auth::id())
+            ->where('transaction_id', $id)  // เปลี่ยนจาก find() เป็น where()
+            ->first();
+
+        // Log ข้อมูลเพื่อ Debug
+        logger()->info("🔍 Looking for transaction ID: " . $id);
+        logger()->info("👤 User ID: " . Auth::id());
+
         if (!$transaction) {
-            logger()->warning("Transaction ID {$id} not found for user " . Auth::id());
+            logger()->warning("❌ Transaction not found - ID: {$id}, User: " . Auth::id());
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction not found'
             ], 404);
         }
-    
-        logger()->info("Transaction Loaded:", $transaction->toArray());
-    
+
+        logger()->info("✅ Transaction found:", $transaction->toArray());
+
         return response()->json([
             'success' => true,
             'transaction' => $transaction

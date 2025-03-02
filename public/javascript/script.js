@@ -343,175 +343,230 @@ function updateActionBar() {
     const actionBar = document.getElementById("action-bar");
     const selectedCount = document.getElementById("selected-count");
     const editButton = document.querySelector(".edit-btn");
-
     const selectedItems = document.querySelectorAll(".row-checkbox:checked");
 
     console.log("✅ Selected Items:", selectedItems.length);
 
     if (selectedItems.length > 0) {
         actionBar.classList.remove("hidden");
-        actionBar.style.display = "flex"; // แสดง Action Bar
+        actionBar.style.display = "flex";
         selectedCount.textContent = `${selectedItems.length} Item(s)`;
 
-        if (selectedItems.length > 1) {
-            editButton.classList.add("hidden");
-        } else {
+        // จัดการปุ่ม Edit
+        if (selectedItems.length === 1) {
+            editButton.disabled = false;
             editButton.classList.remove("hidden");
+            
+            // ลบ event listener เก่าและเพิ่มใหม่
+            const newEditButton = editButton.cloneNode(true);
+            editButton.parentNode.replaceChild(newEditButton, editButton);
+            
+            newEditButton.addEventListener("click", function() {
+                const transactionId = selectedItems[0].getAttribute("data-id");
+                if (transactionId) {
+                    editTransaction(transactionId);
+                }
+            });
+        } else {
+            editButton.disabled = true;
+            editButton.classList.add("hidden");
         }
     } else {
         actionBar.classList.add("hidden");
-        actionBar.style.display = "none";
+        setTimeout(() => {
+            actionBar.style.display = "none";
+        }, 300);
     }
 }
 
-// ✅ ใช้ Event Delegation ให้ Checkbox ถูกจับทุกตัว แม้โหลดใหม่
-document.body.addEventListener("change", function (event) {
-    if (event.target.classList.contains("row-checkbox")) {
-        console.log("🆗 Checkbox Clicked - data-id:", event.target.getAttribute("data-id"));
-        updateActionBar();
-    }
-});
-
-// ✅ ใช้ MutationObserver ตรวจจับเมื่อ Table ถูกโหลดใหม่
-const observer = new MutationObserver(() => {
-    console.log("🔄 Table Updated! Re-attaching checkbox event listeners...");
-    updateActionBar();
-});
-
-observer.observe(document.getElementById('transactionTable'), {
-    childList: true,
-    subtree: true
-});
-
-// ✅ อัปเดต Action Bar ตอนโหลดหน้าเว็บ
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 Initializing Action Bar...");
-    loadTransactions();
-    updateActionBar();
-});
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const editButton = document.querySelector(".edit-btn");
-
-    if (!editButton) {
-        console.error("❌ Edit button not found!");
-        return;
-    }
-
-    editButton.addEventListener("click", function () {
-        let selectedCheckbox = document.querySelector(".row-checkbox:checked");
-
-        if (!selectedCheckbox) {
-            alert("Please select a transaction to edit.");
-            console.error("❌ No checkbox selected!");
-            return;
+// รวมการจัดการ Event Listeners ไว้ในฟังก์ชันเดียว
+function initializeEventListeners() {
+    // Checkbox change event using event delegation
+    document.body.addEventListener("change", function(event) {
+        if (event.target.classList.contains("row-checkbox")) {
+            console.log("🆗 Checkbox Clicked - data-id:", event.target.getAttribute("data-id"));
+            updateActionBar();
         }
-
-        let transactionId = selectedCheckbox.getAttribute("data-id");
-        console.log("🆔 Fetching transaction ID:", transactionId); // ✅ Debug
-
-        if (!transactionId || transactionId === "undefined" || transactionId === "null") {
-            alert("Invalid transaction ID!");
-            console.error("❌ Invalid transaction ID!");
-            return;
-        }
-
-        fetch(`/transactions/${transactionId}`)
-            .then(response => {
-                console.log("🔄 Response status:", response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("📄 Transaction data received:", data);
-                if (data.success) {
-                    showEditTransactionPopup(data.transaction);
-                } else {
-                    alert("Transaction not found.");
-                }
-            })
-            .catch(error => {
-                console.error("❌ Error fetching transaction:", error);
-                alert("Failed to load transaction data.");
-            });
     });
+
+    // Table observer
+    const transactionTable = document.getElementById('transactionTable');
+    if (transactionTable) {
+        const observer = new MutationObserver(() => {
+            console.log("🔄 Table Updated!");
+            updateActionBar();
+        });
+
+        observer.observe(transactionTable, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    // Edit button click handler
+    const editButton = document.querySelector(".edit-btn");
+    if (editButton) {
+        editButton.addEventListener("click", function() {
+            const selectedCheckbox = document.querySelector(".row-checkbox:checked");
+            if (!selectedCheckbox) {
+                alert("Please select a transaction to edit.");
+                return;
+            }
+
+            const transactionId = selectedCheckbox.getAttribute("data-id");
+            if (!transactionId) {
+                alert("Invalid transaction ID!");
+                return;
+            }
+
+            editTransaction(transactionId);
+        });
+    }
+}
+
+// เรียกใช้ initializeEventListeners เมื่อโหลดหน้า
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("🚀 Initializing...");
+    loadTransactions();
+    initializeEventListeners();
+    initializeEditFormListener();
+    updateActionBar();
 });
-
-
-
 
 // ✅ ฟังก์ชันแสดง Edit Popup
 function showEditTransactionPopup(transaction) {
-    const popup = document.getElementById("editTransactionPopup");
+    console.log("📝 Showing edit popup for transaction:", transaction);
 
+    const popup = document.getElementById("editTransactionPopup");
     if (!popup) {
-        console.error("Edit transaction popup not found!");
+        console.error("❌ Edit popup element not found!");
         return;
     }
 
-    console.log("Editing Transaction:", transaction); // ✅ Debug Log
+    try {
+        // ✅ เติมค่าลงในฟอร์มแก้ไข
+        document.getElementById("edit_id").value = transaction.transaction_id;
+        document.getElementById("edit_description").value = transaction.description;
+        document.getElementById("edit_amount").value = transaction.amount;
+        document.getElementById("edit_type").value = transaction.type;
+        document.getElementById("edit_category").value = transaction.category;
+        
+        // จัดการกับวันที่
+        let transactionDate = transaction.transaction_date;
+        if (transactionDate.includes('T')) {
+            transactionDate = transactionDate.split('T')[0];
+        }
+        document.getElementById("edit_transaction_date").value = transactionDate;
 
-    // ✅ เติมค่าลงในฟอร์มแก้ไข
-    document.getElementById("edit_id").value = transaction.transaction_id;
-    document.getElementById("edit_description").value = transaction.description;
-    document.getElementById("edit_amount").value = transaction.amount;
-    document.getElementById("edit_type").value = transaction.type;
-    document.getElementById("edit_category").value = transaction.category;
-    document.getElementById("edit_transaction_date").value =
-        transaction.transaction_date.split("T")[0];
+        // แสดง popup
+        popup.style.display = "flex";
+        popup.style.opacity = "0";
+        popup.offsetHeight; // Trigger reflow
+        popup.style.opacity = "1";
+        popup.classList.add("active");
 
-    popup.style.display = "flex";
-    popup.offsetHeight; // ✅ Trigger reflow เพื่อให้ transition ทำงาน
-    popup.classList.add("active");
+        console.log("✅ Popup should be visible now");
+    } catch (error) {
+        console.error("❌ Error while populating form:", error);
+        alert("Error showing edit form: " + error.message);
+    }
 }
 
-    
-
-//  ฟังก์ชันปิด Edit Popup
+// ✅ ฟังก์ชันปิด Edit Popup
 function hideEditTransactionPopup() {
     const popup = document.getElementById("editTransactionPopup");
+    if (!popup) {
+        console.error("❌ Edit popup element not found!");
+        return;
+    }
+    
     popup.classList.remove("active");
+    popup.style.opacity = "0";
     setTimeout(() => {
         popup.style.display = "none";
     }, 300);
 }
 
-//  กด Save และส่ง `PUT` request เพื่ออัปเดตข้อมูล
-document
-    .getElementById("editTransactionForm")
-    .addEventListener("submit", function (e) {
+// ✅ Event Listener สำหรับ Form Submission
+function initializeEditFormListener() {
+    const editForm = document.getElementById('editTransactionForm');
+    if (!editForm) {
+        console.error("❌ Edit form not found!");
+        return;
+    }
+
+    // Remove existing listeners
+    const newForm = editForm.cloneNode(true);
+    editForm.parentNode.replaceChild(newForm, editForm);
+
+    newForm.addEventListener('submit', function(e) {
         e.preventDefault();
-
+        console.log("🔄 Form submitted");
+        
         const formData = new FormData(this);
-        const formDataObject = Object.fromEntries(formData);
-        const transactionId = formDataObject.id; //  ดึง ID ของ Transaction
-
+        const transactionId = document.getElementById('edit_id').value;
+        
+        // Convert FormData to JSON
+        const formDataObject = {};
+        formData.forEach((value, key) => {
+            formDataObject[key] = value;
+        });
+        
+        console.log("📦 Sending data:", formDataObject);
+        
         fetch(`/transactions/${transactionId}`, {
-            method: "PUT",
+            method: 'PUT',
             headers: {
-                "X-CSRF-TOKEN": document.querySelector(
-                    "meta[name='csrf-token']"
-                ).content,
-                Accept: "application/json",
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             },
-            body: JSON.stringify(formDataObject),
+            body: JSON.stringify(formDataObject)
         })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    hideEditTransactionPopup();
-                    window.location.reload();
-                } else {
-                    alert("Error: " + data.message);
-                }
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-                alert("Failed to update transaction");
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hideEditTransactionPopup();
+                loadTransactions();
+            } else {
+                throw new Error(data.message || 'Failed to update transaction');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('Error updating transaction: ' + error.message);
+        });
     });
+}
+
+function editTransaction(transactionId) {
+    console.log('🔄 Editing transaction with ID:', transactionId);
+
+    if (!transactionId) {
+        console.error('❌ Transaction ID is missing!');
+        alert('Invalid transaction ID!');
+        return;
+    }
+
+    // Fetch transaction data with correct API endpoint
+    fetch(`/api/transactions/${transactionId}`)
+        .then(response => {
+            console.log('📡 API Response:', response);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Transaction data:', data);
+            if (data.success) {
+                showEditTransactionPopup(data.data);  // เปลี่ยนจาก data.transaction เป็น data.data
+            } else {
+                throw new Error(data.message || 'Failed to load transaction');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('Error loading transaction data: ' + error.message);
+        });
+}
