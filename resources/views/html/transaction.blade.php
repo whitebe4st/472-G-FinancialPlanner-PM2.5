@@ -249,6 +249,7 @@ hr {
     animation: slideIn 0.2s ease;
     animation-fill-mode: both;
 }
+
 </style>
 
 @push('scripts')
@@ -407,10 +408,6 @@ function generateTableHTML(data) {
     `;
 }
 
-
-
-
-
 function generatePaginationHTML(data) {
     let html = `
         <button class="page-nav" onclick="changePage(${data.current_page - 1})" ${data.current_page === 1 ? 'disabled' : ''}>&lt;</button>
@@ -436,7 +433,6 @@ function changePage(page) {
     currentPage = page;
     loadTransactions();
 }
-
 
 function attachCheckboxListeners() {
     console.log("🔄 Attaching event listeners to checkboxes...");
@@ -466,9 +462,110 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSelectedStates();
 });
 
+function updateActionBar() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    const actionBar = document.getElementById('action-bar');
+    const selectedCount = document.getElementById('selected-count');
+    const editBtn = document.querySelector('.edit-btn');
 
+    // ลบ event listener เก่าออกก่อน
+    editBtn.removeEventListener('click', handleEditClick);
 
+    if (selectedCheckboxes.length > 0) {
+        actionBar.classList.remove('hidden');
+        selectedCount.textContent = `${selectedCheckboxes.length} Items`;
+        
+        // Enable/disable edit button based on selection count
+        if (selectedCheckboxes.length === 1) {
+            editBtn.disabled = false;
+            // เพิ่ม event listener ใหม่
+            editBtn.addEventListener('click', handleEditClick);
+        } else {
+            editBtn.disabled = true;
+        }
+    } else {
+        actionBar.classList.add('hidden');
+    }
+}
 
+// แยกฟังก์ชันสำหรับจัดการการคลิกปุ่ม edit
+function handleEditClick() {
+    const selectedCheckbox = document.querySelector('.row-checkbox:checked');
+    if (selectedCheckbox) {
+        const transactionId = selectedCheckbox.getAttribute('data-id');
+        editTransaction(transactionId);
+    }
+}
+
+function editTransaction(transactionId) {
+    console.log('Editing transaction with ID:', transactionId); // เพิ่ม debug log
+
+    if (!transactionId) {
+        console.error('Transaction ID is missing!'); // เพิ่ม debug log
+        alert('Invalid transaction ID!');
+        return;
+    }
+
+    // Fetch transaction data
+    fetch(`/api/transactions/${transactionId}`)
+        .then(response => {
+            console.log('API Response:', response); // เพิ่ม debug log
+            return response.json();
+        })
+        .then(data => {
+            console.log('Transaction data:', data); // เพิ่ม debug log
+            if (data.success) {
+                const transaction = data.data;
+                
+                // Populate edit form
+                document.getElementById('edit_id').value = transaction.id;
+                document.getElementById('edit_description').value = transaction.description;
+                document.getElementById('edit_amount').value = transaction.amount;
+                document.getElementById('edit_type').value = transaction.type;
+                document.getElementById('edit_category').value = transaction.category;
+                document.getElementById('edit_transaction_date').value = transaction.transaction_date;
+                
+                // Show edit popup
+                document.getElementById('editTransactionPopup').style.display = 'block';
+            } else {
+                alert('Error loading transaction data!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading transaction data!');
+        });
+}
+
+function hideEditTransactionPopup() {
+    document.getElementById('editTransactionPopup').style.display = 'none';
+}
+
+// Add event listener for edit form submission
+document.getElementById('editTransactionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const transactionId = document.getElementById('edit_id').value;
+    
+    fetch(`/api/transactions/${transactionId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideEditTransactionPopup();
+            loadTransactions(); // Reload the table
+        } else {
+            alert('Error updating transaction!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating transaction!');
+    });
+});
 </script>
 @endpush
 
