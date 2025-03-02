@@ -74,6 +74,13 @@
         <div class="addBar-btn">
             <button onclick="showAddTransactionPopup()">+</button>
         </div>
+        <div id="action-bar" class="action-bar hidden">
+        <span id="selected-count">0 Items</span>
+        <button class="edit-btn">✏ Edit</button>
+        <button class="bookmark-btn">🔖 Bookmark</button>
+        <button class="remove-btn">🗑 Remove</button>
+    </div>
+
     </div>
 </div>
 
@@ -348,6 +355,7 @@ function loadTransactions() {
             requestAnimationFrame(() => {
                 tableContainer.style.opacity = '1';
             });
+            attachCheckboxListeners();
         })
         .catch(error => {
             console.error('Error:', error);
@@ -358,6 +366,8 @@ function loadTransactions() {
 }
 
 function generateTableHTML(data) {
+    console.log("🔍 Checking transaction data before rendering:", data); // ✅ Debug Full Data
+
     return `
         <table>
             <thead class="head-table">
@@ -372,9 +382,14 @@ function generateTableHTML(data) {
                 </tr>
             </thead>
             <tbody>
-                ${data.data.map((transaction, index) => `
+                ${data.data.map((transaction, index) => {
+                    console.log(`🆔 Row ${index + 1} - transaction:`, transaction); // ✅ Debug ข้อมูล transaction เต็มๆ
+                    let transactionId = transaction.transaction_id ?? `row-${index}`;
+                    console.log(`✅ Set data-id for row ${index + 1}:`, transactionId); // ✅ Debug ค่า data-id
+
+                    return `
                     <tr style="animation-delay: ${index * 0.05}s">
-                        <td><input type="checkbox" class="row-checkbox"></td>
+                        <td><input type="checkbox" class="row-checkbox" data-id="${transactionId}"></td>
                         <td data-category="${transaction.category}">${transaction.description}</td>
                         <td>${new Date(transaction.transaction_date).toLocaleDateString()}</td>
                         <td>$${parseFloat(transaction.amount).toFixed(2)}</td>
@@ -385,15 +400,16 @@ function generateTableHTML(data) {
                                 <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"></path>
                             </svg>
                         </td>
-                    </tr>
-                `).join('')}
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
-        <div class="pagination" style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
-            ${generatePaginationHTML(data)}
-        </div>
     `;
 }
+
+
+
+
 
 function generatePaginationHTML(data) {
     let html = `
@@ -421,6 +437,19 @@ function changePage(page) {
     loadTransactions();
 }
 
+
+function attachCheckboxListeners() {
+    console.log("🔄 Attaching event listeners to checkboxes...");
+
+    document.querySelectorAll(".row-checkbox").forEach(checkbox => {
+        console.log("✅ Found checkbox - data-id:", checkbox.getAttribute("data-id")); // Debug
+
+        checkbox.addEventListener("change", function () {
+            updateActionBar();
+        });
+    });
+}
+
 // Close dropdowns when clicking outside
 document.addEventListener('click', function(event) {
     if (!event.target.closest('.dropdown')) {
@@ -436,6 +465,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTransactions();
     updateSelectedStates();
 });
+
+
+
+
 </script>
 @endpush
 
@@ -500,6 +533,53 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="submit">Add</button>
         </div>
     </form>
+</div>
+
+<div id="editTransactionPopup" class="popup">
+    <div class="popup-content">
+        <div class="popup-header">
+            <h2>Edit Transaction</h2>
+            <button onclick="hideEditTransactionPopup()">&times;</button>
+        </div>
+
+        <form id="editTransactionForm">
+            @csrf
+            <input type="hidden" id="edit_id" name="id">
+            
+            <div class="form-group">
+                <label for="edit_description">Description</label>
+                <input type="text" id="edit_description" name="description" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_amount">Amount</label>
+                <input type="number" id="edit_amount" name="amount" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_type">Type</label>
+                <select id="edit_type" name="type" required>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_category">Category</label>
+                <input type="text" id="edit_category" name="category" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_transaction_date">Date</label>
+                <input type="date" id="edit_transaction_date" name="transaction_date" required>
+            </div>
+
+            <div class="button-group">
+                <button type="button" onclick="hideEditTransactionPopup()">Cancel</button>
+                <button type="submit">Save</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @endsection

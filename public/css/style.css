@@ -1074,3 +1074,17 @@ body {
     color: #666;
     text-align: right;
 }
+
+.hidden {
+    display: none;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: center;
+    bottom: 10px;
+    left: 50%;
+    background: white;
+    padding: 30px 10px 10px;
+    gap: 10px;
+}

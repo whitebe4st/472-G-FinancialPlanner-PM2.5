@@ -58,12 +58,12 @@ class TransactionController extends Controller
     public function getTransactions(Request $request)
     {
         $query = Transaction::where('user_id', Auth::id());
-
+    
         // Apply type filter
         if ($request->type !== 'all') {
             $query->where('type', $request->type);
         }
-
+    
         // Apply time filter
         switch ($request->time) {
             case 'today':
@@ -80,15 +80,29 @@ class TransactionController extends Controller
                 $query->whereYear('transaction_date', Carbon::now()->year);
                 break;
         }
-
+    
         // Apply sorting
         $sortField = $request->sort === 'amount' ? 'amount' : 'transaction_date';
         $sortOrder = $request->order === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortField, $sortOrder);
-
-        // Return paginated results
-        return $query->paginate(10);
+    
+        // ✅ ระบุให้แน่ใจว่า `transaction_id` ถูกดึงมา
+        $transactions = $query->paginate(10, [
+            'transaction_id', // 🔥 ต้องแน่ใจว่าเอาค่ามานะ
+            'description',
+            'amount',
+            'type',
+            'category',
+            'transaction_date'
+        ]);
+    
+        // ✅ Debug ดูว่ามี `transaction_id` ใน JSON หรือไม่
+        logger()->info('🔍 Transactions Response:', $transactions->toArray());
+    
+        return response()->json($transactions);
     }
+    
+    
 
     public function bookmarkTransaction(Request $request)
     {
@@ -178,4 +192,85 @@ class TransactionController extends Controller
             ], 500);
         }
     }
+
+
+    public function show($id)
+    {
+        // ✅ ค้นหา Transaction ตาม ID และต้องเป็นของผู้ใช้ที่ล็อกอินอยู่
+        $transaction = Transaction::where('user_id', Auth::id())->find($id);
+    
+        // ✅ Log ข้อมูลเพื่อ Debug
+        if (!$transaction) {
+            logger()->warning("Transaction ID {$id} not found for user " . Auth::id());
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found'
+            ], 404);
+        }
+    
+        logger()->info("Transaction Loaded:", $transaction->toArray());
+    
+        return response()->json([
+            'success' => true,
+            'transaction' => $transaction
+        ]);
+    }
+    
+
+    // ✅ ฟังก์ชันอัปเดต Transaction
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'description' => 'required|string|max:255',
+            'amount' => 'required|numeric',
+            'type' => 'required|in:expense,income',
+            'category' => 'required|string|max:50',
+            'transaction_date' => 'required|date',
+        ]);
+
+        $transaction = Transaction::where('user_id', Auth::id())->find($id);
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found'
+            ], 404);
+        }
+
+        try {
+            $transaction->update([
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'type' => $request->type,
+                'category' => $request->category,
+                'transaction_date' => $request->transaction_date,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction updated successfully',
+                'transaction' => $transaction
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function index()
+{
+    $transactions = Transaction::where('user_id', Auth::id())
+        ->orderBy('transaction_date', 'desc')
+        ->get();
+
+    logger()->info('Transactions Loaded:', $transactions->toArray()); // ✅ Debug Log
+
+    return view('html.transaction', compact('transactions'));
+}
+
+
+
 } 
+

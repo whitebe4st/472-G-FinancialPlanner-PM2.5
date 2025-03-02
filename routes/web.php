@@ -35,4 +35,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/bookmark', [BookmarkController::class, 'index'])->name('bookmark.index');
     Route::post('/api/add-bookmarked-transactions', [TransactionController::class, 'addFromBookmarks'])->name('transactions.add-from-bookmarks');
     Route::get('/api/bookmarks', [BookmarkController::class, 'getBookmarks'])->name('bookmarks.get');
+
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']); //  ดึงข้อมูล Transaction เพื่อนำไปแก้ไข
+    Route::put('/transactions/{id}', [TransactionController::class, 'update']); //  อัปเดต Transaction หลังจากแก้ไข
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
+
+
+
