@@ -1101,7 +1101,7 @@ body {
 
 .action-bar button {
     padding: 8px 16px;
-    border: none;
+    border: 1px solid black;
     border-radius: 4px;
     cursor: pointer;
     display: flex;

@@ -162,6 +162,7 @@ function loadTransactions(filters) {
     console.log('Loading transactions with filters:', filters);
     
     const tableContainer = document.getElementById('transactionTable');
+    console.log("table = ",tableContainer.getAttribute("data-id"));
     const loadingAnimation = document.getElementById('loadingAnimation');
     if (!tableContainer || !loadingAnimation) return;
     
@@ -188,13 +189,24 @@ function loadTransactions(filters) {
         .then(response => response.json())
         .then(data => {
             console.log('Received transaction data:', data);
+            console.log(data.data);
+            data.data.forEach(transaction => {
+                console.log("🆔 Transaction ID:", transaction.transaction_id);
+                console.log("📝 Description:", transaction.description);
+                console.log("💲 Amount:", transaction.amount);
+                console.log("📂 Type:", transaction.type);
+                console.log("📌 Category:", transaction.category);
+                console.log("----------------------------");
+            });
             // Hide loading animation and show table
             loadingAnimation.style.display = 'none';
             tableContainer.innerHTML = generateTableHTML(data);
+            console.log("table2 = ",tableContainer);
             requestAnimationFrame(() => {
                 tableContainer.style.opacity = '1';
             });
             currentRequest = null;
+            
         })
         .catch(error => {
             if (error.name === 'AbortError') {
@@ -223,9 +235,14 @@ function generateTableHTML(data) {
                 </tr>
             </thead>
             <tbody>
-                ${data.data.map((transaction, index) => `
+                ${data.data.map((transaction, index) => {
+                    console.log(`🆔 Row ${index + 1} - transaction:`, transaction); // ✅ Debug ข้อมูล transaction เต็มๆ
+                    let transactionId = transaction.transaction_id ?? `row-${index}`;
+                    console.log(`✅ Set data-id for row ${index + 1}:`, transactionId); // ✅ Debug ค่า data-id
+
+                    return `
                     <tr style="animation-delay: ${index * 0.05}s">
-                        <td><input type="checkbox" class="row-checkbox"></td>
+                        <td><input type="checkbox" class="row-checkbox" data-id="${transactionId}"></td>
                         <td data-category="${transaction.category}">${transaction.description}</td>
                         <td>${new Date(transaction.transaction_date).toLocaleDateString()}</td>
                         <td>$${parseFloat(transaction.amount).toFixed(2)}</td>
@@ -236,13 +253,10 @@ function generateTableHTML(data) {
                                 <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"></path>
                             </svg>
                         </td>
-                    </tr>
-                `).join('')}
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
-        <div class="pagination" style="margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
-            ${generatePaginationHTML(data)}
-        </div>
     `;
 }
 

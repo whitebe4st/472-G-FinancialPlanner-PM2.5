@@ -1,7 +1,6 @@
 function toggleAllCheckboxes() {
     const selectAllCheckbox = document.getElementById("selectAll");
     const rowCheckboxes = document.querySelectorAll(".row-checkbox");
-
     if (!selectAllCheckbox || rowCheckboxes.length === 0) {
         console.error("Select All checkbox or row checkboxes not found!");
         return;
@@ -344,8 +343,35 @@ function updateActionBar() {
     const selectedCount = document.getElementById("selected-count");
     const editButton = document.querySelector(".edit-btn");
     const selectedItems = document.querySelectorAll(".row-checkbox:checked");
-
+    console.log(selectedItems);
     console.log("✅ Selected Items:", selectedItems.length);
+    // const selectedRows = [];
+    // selectedItems.forEach((checkbox) => {
+    //     const row = checkbox.closest("tr");
+    //     const cells = row.getElementsByTagName("td");
+
+    //     selectedRows.push({
+    //         transaction_id: checkbox.dataset.id,
+    //         description: cells[1].innerText.trim(),
+    //         date: cells[2].innerText.trim(),
+    //         amount: parseFloat(cells[3].innerText.replace("$", "").trim()),
+    //         type: cells[4].innerText.trim(),
+    //         category: cells[5].innerText.trim(),
+    //     });
+    // });
+
+    // console.log("แถวที่เลือก:", selectedRows);
+    selectedItems.forEach(checkbox => {
+        const dataId = checkbox.dataset.id;
+        console.log("Transaction ID:", dataId);
+    });
+    
+
+    const selectedIds = Array.from(selectedItems).map(checkbox => checkbox.dataset.id);
+    console.log("📌 Transaction IDs ที่ถูกเลือก:", selectedIds);
+
+    const tableContainer = document.getElementById('transactionTable');
+    console.log(tableContainer.querySelectorAll('.row-checkbox'));
 
     if (selectedItems.length > 0) {
         actionBar.classList.remove("hidden");
@@ -363,6 +389,7 @@ function updateActionBar() {
             
             newEditButton.addEventListener("click", function() {
                 const transactionId = selectedItems[0].getAttribute("data-id");
+                console.log("transaction id = ",transactionId);
                 if (transactionId) {
                     editTransaction(transactionId);
                 }
@@ -371,6 +398,7 @@ function updateActionBar() {
             editButton.disabled = true;
             editButton.classList.add("hidden");
         }
+        initializeEventListeners();
     } else {
         actionBar.classList.add("hidden");
         setTimeout(() => {
@@ -407,13 +435,16 @@ function initializeEventListeners() {
     const editButton = document.querySelector(".edit-btn");
     if (editButton) {
         editButton.addEventListener("click", function() {
-            const selectedCheckbox = document.querySelector(".row-checkbox:checked");
+            const selectedCheckbox = document.querySelectorAll(".row-checkbox:checked");
+            console.log(selectedCheckbox);
             if (!selectedCheckbox) {
                 alert("Please select a transaction to edit.");
                 return;
             }
-
+            
             const transactionId = selectedCheckbox.getAttribute("data-id");
+            console.log(selectedCheckbox.data);
+            console.log("transaction Id = ",transactionId);
             if (!transactionId) {
                 alert("Invalid transaction ID!");
                 return;
@@ -514,7 +545,7 @@ function initializeEditFormListener() {
         
         console.log("📦 Sending data:", formDataObject);
         
-        fetch(`/transactions/${transactionId}`, {
+        fetch(`/api/transactions/${transactionId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -541,6 +572,11 @@ function initializeEditFormListener() {
 
 function editTransaction(transactionId) {
     console.log('🔄 Editing transaction with ID:', transactionId);
+    const controller = new AbortController();
+    currentRequest = controller;
+
+    // Build query string
+    
 
     if (!transactionId) {
         console.error('❌ Transaction ID is missing!');
