@@ -125,6 +125,11 @@
         @yield('editTransactionPopup')
     </div>
 
+    <!-- Edit Bookmark Popup -->
+    <div id="editBookmarkPopup" class="popup">
+        @yield('editBookmarkPopup')
+    </div>
+
     <!-- Add this new modal -->
     <div id="bookmarkSelectionModal" class="popup">
         <div class="popup-content">
@@ -167,6 +172,7 @@
     @stack('scripts')
     <script src="{{ asset('js/bookmark.js') }}"></script>
     <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/bookmark-edit.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('js/loading.js') }}"></script>
 </body>

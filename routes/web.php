@@ -36,6 +36,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/add-bookmarked-transactions', [TransactionController::class, 'addFromBookmarks'])->name('transactions.add-from-bookmarks');
     Route::get('/api/bookmarks', [BookmarkController::class, 'getBookmarks'])->name('bookmarks.get');
 
+    // Bookmark management routes
+    Route::get('/bookmarks/{id}', [BookmarkController::class, 'show'])->name('bookmarks.show');
+    Route::put('/bookmarks/{id}', [BookmarkController::class, 'update'])->name('bookmarks.update');
+    Route::delete('/bookmarks/{id}', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
+    Route::delete('/bookmarks', [BookmarkController::class, 'destroyMultiple'])->name('bookmarks.destroy-multiple');
+
     Route::get('/transactions/{id}', [TransactionController::class, 'show']); //  ดึงข้อมูล Transaction เพื่อนำไปแก้ไข
     Route::put('/transactions/{id}', [TransactionController::class, 'update']); //  อัปเดต Transaction หลังจากแก้ไข
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']); // Delete transaction

@@ -46,4 +46,142 @@ class BookmarkController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get a specific bookmark for editing
+     */
+    public function show($id)
+    {
+        try {
+            $bookmark = BookmarkedTransaction::where('user_id', Auth::id())
+                ->where('bookmark_id', $id)
+                ->first();
+
+            if (!$bookmark) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bookmark not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'bookmark' => $bookmark
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch bookmark: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a bookmarked transaction
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'description' => 'required|string|max:255',
+            'amount' => 'required|numeric',
+            'type' => 'required|in:expense,income',
+            'category' => 'required|string|max:50',
+        ]);
+
+        try {
+            $bookmark = BookmarkedTransaction::where('user_id', Auth::id())
+                ->where('bookmark_id', $id)
+                ->first();
+
+            if (!$bookmark) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bookmark not found'
+                ], 404);
+            }
+
+            $bookmark->update([
+                'description' => $request->description,
+                'amount' => $request->amount,
+                'type' => $request->type,
+                'category' => $request->category,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bookmark updated successfully',
+                'bookmark' => $bookmark
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update bookmark: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a single bookmarked transaction
+     */
+    public function destroy($id)
+    {
+        try {
+            $bookmark = BookmarkedTransaction::where('user_id', Auth::id())
+                ->where('bookmark_id', $id)
+                ->first();
+
+            if (!$bookmark) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bookmark not found'
+                ], 404);
+            }
+
+            $bookmark->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bookmark deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete bookmark: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete multiple bookmarked transactions
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'numeric'
+        ]);
+
+        try {
+            $deletedCount = BookmarkedTransaction::where('user_id', Auth::id())
+                ->whereIn('bookmark_id', $request->ids)
+                ->delete();
+
+            if ($deletedCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No bookmarks found to delete'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $deletedCount . ' bookmarks deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete bookmarks: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 
