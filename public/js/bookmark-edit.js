@@ -1,20 +1,41 @@
 // Variables to store categories and the current request state
 let bookmarkCategories = [];
 let currentBookmarkRequest = null;
+let editBookmarkObserver = null;
 
-// Initialize the bookmark edit page functionality
-document.addEventListener('DOMContentLoaded', function() {
+// Listen for both regular document ready and Turbolinks page loads
+document.addEventListener('DOMContentLoaded', initializeBookmarkEdit);
+document.addEventListener('turbolinks:load', initializeBookmarkEdit);
+
+// Initialize the bookmark edit functionality
+function initializeBookmarkEdit() {
     console.log('🚀 Initializing bookmark-edit.js');
     
-    // Load categories for the edit form when page loads
+    // Load categories
     loadCategoriesForBookmarkEdit();
     
-    // Setup event listeners for the edit bookmark category field
+    // Set up event listeners for the category field
     setupEditBookmarkCategoryListeners();
-});
+    
+    // Set up a mutation observer to watch for popup visibility
+    setupPopupObserver();
+    
+    // Clean up any stale state from previous page loads
+    window.addEventListener('beforeunload', function() {
+        if (editBookmarkObserver) {
+            editBookmarkObserver.disconnect();
+        }
+    });
+}
 
 // Fetch categories from the server
 function loadCategoriesForBookmarkEdit() {
+    // Check if we already have categories loaded
+    if (bookmarkCategories.length > 0) {
+        console.log('📋 Using cached categories:', bookmarkCategories);
+        return;
+    }
+    
     fetch('/transactions/categories')
         .then(response => response.json())
         .then(data => {
@@ -26,61 +47,72 @@ function loadCategoriesForBookmarkEdit() {
         });
 }
 
-// Set up listeners for category dropdown
+// Set up event listeners for category dropdown
 function setupEditBookmarkCategoryListeners() {
-    const categoryInput = document.getElementById('edit_bookmark_category');
+    // Target both edit forms by using a class selector or a more general approach
+    const categoryInputs = document.querySelectorAll('#edit_bookmark_category, [name="category"]');
     
-    if (!categoryInput) {
-        console.log('⚠️ Category input not found - might be loaded later');
+    if (categoryInputs.length === 0) {
+        console.log('⚠️ Category inputs not found - might be loaded later');
         return;
     }
     
-    // Show dropdown on focus
-    categoryInput.addEventListener('focus', function() {
-        const dropdown = document.getElementById('editBookmarkCategoryDropdown');
-        if (dropdown) {
-            dropdown.classList.add('show');
-            updateEditBookmarkCategoryDropdown(this.value);
-        }
-    });
+    console.log(`✅ Found ${categoryInputs.length} category inputs, attaching listeners`);
     
-    // Filter categories as user types
-    categoryInput.addEventListener('input', function() {
-        const dropdown = document.getElementById('editBookmarkCategoryDropdown');
-        if (dropdown) {
-            dropdown.classList.add('show');
-            updateEditBookmarkCategoryDropdown(this.value);
+    categoryInputs.forEach(input => {
+        // Skip if already processed
+        if (input.hasAttribute('data-category-listener')) {
+            return;
         }
-    });
-    
-    // Handle keyboard events (Enter key)
-    categoryInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !bookmarkCategories.includes(this.value)) {
-            e.preventDefault();
-            const dropdown = document.getElementById('editBookmarkCategoryDropdown');
+        
+        // Show dropdown on focus
+        input.addEventListener('focus', function() {
+            const dropdownId = this.id === 'edit_bookmark_category' ? 
+                'editBookmarkCategoryDropdown' : 'categoryDropdown';
+            const dropdown = document.getElementById(dropdownId);
+            
             if (dropdown) {
-                dropdown.classList.remove('show');
+                dropdown.classList.add('show');
+                updateEditBookmarkCategoryDropdown(this.value, dropdown);
             }
-        }
+        });
+        
+        // Filter categories as user types
+        input.addEventListener('input', function() {
+            const dropdownId = this.id === 'edit_bookmark_category' ? 
+                'editBookmarkCategoryDropdown' : 'categoryDropdown';
+            const dropdown = document.getElementById(dropdownId);
+            
+            if (dropdown) {
+                dropdown.classList.add('show');
+                updateEditBookmarkCategoryDropdown(this.value, dropdown);
+            }
+        });
+        
+        // Mark as processed
+        input.setAttribute('data-category-listener', 'true');
     });
     
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('editBookmarkCategoryDropdown');
-        if (!dropdown) return;
-        
-        const input = document.getElementById('edit_bookmark_category');
-        if (!input) return;
-        
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('show');
-        }
-    });
+    // Global click handler to close dropdowns
+    if (!document.hasAttribute('data-category-click-handler')) {
+        document.addEventListener('click', function(e) {
+            const dropdowns = document.querySelectorAll('.category-dropdown');
+            dropdowns.forEach(dropdown => {
+                const inputId = dropdown.id === 'editBookmarkCategoryDropdown' ? 
+                    'edit_bookmark_category' : 'category';
+                const input = document.getElementById(inputId);
+                
+                if (input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        });
+        document.setAttribute('data-category-click-handler', 'true');
+    }
 }
 
-// Update the category dropdown content based on filter
-function updateEditBookmarkCategoryDropdown(filter) {
-    const dropdown = document.getElementById('editBookmarkCategoryDropdown');
+// Update the category dropdown content
+function updateEditBookmarkCategoryDropdown(filter, dropdown) {
     if (!dropdown) return;
     
     dropdown.innerHTML = '';
@@ -94,7 +126,20 @@ function updateEditBookmarkCategoryDropdown(filter) {
             const div = document.createElement('div');
             div.className = 'category-option';
             div.textContent = category;
-            div.onclick = () => selectEditBookmarkCategory(category);
+            div.onclick = () => {
+                // Find the associated input
+                let input;
+                if (dropdown.id === 'editBookmarkCategoryDropdown') {
+                    input = document.getElementById('edit_bookmark_category');
+                } else {
+                    input = document.getElementById('category');
+                }
+                
+                if (input) {
+                    input.value = category;
+                    dropdown.classList.remove('show');
+                }
+            };
             dropdown.appendChild(div);
         });
     } else if (filter) {
@@ -108,15 +153,6 @@ function updateEditBookmarkCategoryDropdown(filter) {
         div.textContent = 'No categories found';
         dropdown.appendChild(div);
     }
-}
-
-// Select a category from the dropdown
-function selectEditBookmarkCategory(category) {
-    const input = document.getElementById('edit_bookmark_category');
-    const dropdown = document.getElementById('editBookmarkCategoryDropdown');
-    
-    if (input) input.value = category;
-    if (dropdown) dropdown.classList.remove('show');
 }
 
 // Populate Edit Bookmark Form
@@ -157,4 +193,48 @@ function validateBookmarkForm(formData) {
     }
     
     return errors;
+}
+
+// Setup a MutationObserver to detect when the popup becomes visible
+function setupPopupObserver() {
+    // Disconnect any existing observer
+    if (editBookmarkObserver) {
+        editBookmarkObserver.disconnect();
+    }
+    
+    // We'll check for visibility changes on the popup
+    const popup = document.getElementById('editBookmarkPopup');
+    if (!popup) {
+        console.log('⚠️ Edit bookmark popup not found in DOM yet');
+        return;
+    }
+    
+    console.log('🔍 Setting up observer for edit bookmark popup');
+    
+    // Create new observer to monitor style and class changes
+    editBookmarkObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            // When popup becomes visible
+            if ((mutation.attributeName === 'style' && 
+                popup.style.display === 'flex') ||
+                (mutation.attributeName === 'class' && 
+                popup.classList.contains('active'))) {
+                
+                console.log('👁️ Popup display detected, reinitializing fields');
+                
+                // Allow time for the popup content to be completely rendered
+                setTimeout(() => {
+                    setupEditBookmarkCategoryListeners();
+                }, 100);
+            }
+        });
+    });
+    
+    // Configure and start the observer
+    editBookmarkObserver.observe(popup, { 
+        attributes: true, 
+        attributeFilter: ['style', 'class'] 
+    });
+    
+    console.log('✅ Popup observer setup complete');
 } 

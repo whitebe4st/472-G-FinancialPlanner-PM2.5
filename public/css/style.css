@@ -1232,3 +1232,21 @@ body {
 .action-bar .remove-btn:hover {
     background: #cc3333;
 }
+
+/* Specific fix for edit popups to ensure they appear correctly */
+#editBookmarkPopup.active,
+#editTransactionPopup.active {
+    display: flex !important;
+    opacity: 1;
+}
+
+/* Ensure popups are hidden properly when inactive */
+.popup:not(.active) {
+    pointer-events: none;
+}
+
+/* When Turbolinks is loading, make sure popups are reset */
+.turbolinks-progress-bar ~ body .popup {
+    display: none !important;
+    opacity: 0;
+}
