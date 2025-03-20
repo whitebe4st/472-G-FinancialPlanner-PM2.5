@@ -38,6 +38,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/transactions/{id}', [TransactionController::class, 'show']); //  ดึงข้อมูล Transaction เพื่อนำไปแก้ไข
     Route::put('/transactions/{id}', [TransactionController::class, 'update']); //  อัปเดต Transaction หลังจากแก้ไข
+    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']); // Delete transaction
+    Route::post('/transactions/bookmark-multiple', [TransactionController::class, 'bookmarkMultiple'])->name('transactions.bookmark-multiple');
+    Route::delete('/transactions', [TransactionController::class, 'destroyMultiple'])->name('transactions.destroy-multiple');
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
 

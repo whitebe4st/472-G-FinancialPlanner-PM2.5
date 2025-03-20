@@ -76,24 +76,26 @@
         </div>
         <div id="action-bar" class="action-bar hidden">
             <span id="selected-count">0 Items</span>
-            <button class="edit-btn" disabled>
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
-                </svg>
-                Edit
-            </button>
-            <button class="bookmark-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                    <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-                Bookmark
-            </button>
-            <button class="remove-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                </svg>
-                Remove
-            </button>
+            <div class="action-buttons">
+                <button class="edit-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                    </svg>
+                    Edit
+                </button>
+                <button class="bookmark-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    Bookmark
+                </button>
+                <button class="remove-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                    </svg>
+                    Remove
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -371,52 +373,64 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </form>
 </div>
+@endsection
 
-<div id="editTransactionPopup" class="popup">
-    <div class="popup-content">
-        <div class="popup-header">
-            <h2>Edit Transaction</h2>
-            <button onclick="hideEditTransactionPopup()">&times;</button>
+@section('editTransactionPopup')
+<div class="popup-content">
+    <div class="popup-header">
+        <h2>Edit Transaction</h2>
+        <button onclick="hideEditTransactionPopup()">&times;</button>
+    </div>
+
+    <form id="editTransactionForm">
+        @csrf
+        <input type="hidden" id="edit_id" name="id">
+        
+        <div class="form-group">
+            <label for="edit_description">Description</label>
+            <input type="text" id="edit_description" name="description" required>
         </div>
 
-        <form id="editTransactionForm">
-            @csrf
-            <input type="hidden" id="edit_id" name="id">
-            
-            <div class="form-group">
-                <label for="edit_description">Description</label>
-                <input type="text" id="edit_description" name="description" required>
-            </div>
+        <div class="form-group">
+            <label for="edit_amount">Amount</label>
+            <input type="number" id="edit_amount" name="amount" step="0.01" required>
+        </div>
 
-            <div class="form-group">
-                <label for="edit_amount">Amount</label>
-                <input type="number" id="edit_amount" name="amount" step="0.01" required>
-            </div>
+        <div class="form-group">
+            <label for="edit_type">Type</label>
+            <select id="edit_type" name="type" required>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+            </select>
+        </div>
 
-            <div class="form-group">
-                <label for="edit_type">Type</label>
-                <select id="edit_type" name="type" required>
-                    <option value="expense">Expense</option>
-                    <option value="income">Income</option>
-                </select>
+        <div class="form-group">
+            <label for="edit_category">Category</label>
+            <div class="category-input-container">
+                <input 
+                    type="text" 
+                    id="edit_category" 
+                    name="category" 
+                    list="categories" 
+                    autocomplete="off"
+                    required
+                    oninput="filterCategories(this.value)"
+                >
+                <div id="editCategoryDropdown" class="category-dropdown">
+                    <!-- Categories will be populated here -->
+                </div>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label for="edit_category">Category</label>
-                <input type="text" id="edit_category" name="category" required>
-            </div>
+        <div class="form-group">
+            <label for="edit_transaction_date">Date</label>
+            <input type="date" id="edit_transaction_date" name="transaction_date" required>
+        </div>
 
-            <div class="form-group">
-                <label for="edit_transaction_date">Date</label>
-                <input type="date" id="edit_transaction_date" name="transaction_date" required>
-            </div>
-
-            <div class="button-group">
-                <button type="button" onclick="hideEditTransactionPopup()">Cancel</button>
-                <button type="submit">Save</button>
-            </div>
-        </form>
-    </div>
+        <div class="button-group">
+            <button type="button" onclick="hideEditTransactionPopup()">Cancel</button>
+            <button type="submit">Save</button>
+        </div>
+    </form>
 </div>
-
 @endsection

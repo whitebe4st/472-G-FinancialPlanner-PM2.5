@@ -265,17 +265,129 @@ class TransactionController extends Controller
     }
 
     public function index()
-{
-    $transactions = Transaction::where('user_id', Auth::id())
-        ->orderBy('transaction_date', 'desc')
-        ->get();
+    {
+        $transactions = Transaction::where('user_id', Auth::id())
+            ->orderBy('transaction_date', 'desc')
+            ->get();
 
-    logger()->info('Transactions Loaded:', $transactions->toArray()); // ✅ Debug Log
+        logger()->info('Transactions Loaded:', $transactions->toArray()); // ✅ Debug Log
 
-    return view('html.transaction', compact('transactions'));
-}
+        return view('html.transaction', compact('transactions'));
+    }
 
+    // Delete a single transaction
+    public function destroy($id)
+    {
+        try {
+            $transaction = Transaction::where('user_id', Auth::id())
+                ->where('transaction_id', $id)
+                ->first();
 
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found'
+                ], 404);
+            }
 
+            $transaction->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete multiple transactions
+    public function destroyMultiple(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'numeric'
+        ]);
+
+        try {
+            $deletedCount = Transaction::where('user_id', Auth::id())
+                ->whereIn('transaction_id', $request->ids)
+                ->delete();
+
+            if ($deletedCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No transactions found to delete'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $deletedCount . ' transactions deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete transactions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Bookmark multiple transactions
+    public function bookmarkMultiple(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'numeric'
+        ]);
+
+        try {
+            $transactions = Transaction::where('user_id', Auth::id())
+                ->whereIn('transaction_id', $request->ids)
+                ->get();
+
+            if ($transactions->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No transactions found to bookmark'
+                ], 404);
+            }
+
+            $bookmarkedCount = 0;
+            foreach ($transactions as $transaction) {
+                // Check if already bookmarked
+                $exists = BookmarkedTransaction::where('user_id', Auth::id())
+                    ->where('description', $transaction->description)
+                    ->where('amount', $transaction->amount)
+                    ->where('type', $transaction->type)
+                    ->exists();
+
+                if (!$exists) {
+                    BookmarkedTransaction::create([
+                        'user_id' => Auth::id(),
+                        'description' => $transaction->description,
+                        'default_date' => $transaction->transaction_date,
+                        'amount' => $transaction->amount,
+                        'type' => $transaction->type,
+                        'category' => $transaction->category
+                    ]);
+                    $bookmarkedCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $bookmarkedCount . ' transactions bookmarked successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to bookmark transactions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 
 

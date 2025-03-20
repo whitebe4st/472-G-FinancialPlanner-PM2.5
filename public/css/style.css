@@ -338,6 +338,12 @@ table {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.popup.active {
+    opacity: 1;
 }
 
 #bookmarkSelectionModal {
@@ -346,6 +352,35 @@ table {
 
 #bookmarkSelectionModal.active {
     display: flex;
+}
+
+#addTransactionPopup.active,
+#editTransactionPopup.active {
+    display: flex;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.popup-header h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.popup-header button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
 }
 
 .popup-content {
@@ -357,6 +392,13 @@ table {
     max-height: 90vh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .popup-content {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .form-group {
@@ -787,18 +829,20 @@ body {
     right: 20px;
     padding: 15px 25px;
     border-radius: 8px;
+    background: var(--success-color);
     color: white;
-    font-size: 14px;
+    font-weight: 500;
     z-index: 1000;
-    animation: slideIn 0.3s ease;
-}
-
-.notification.success {
-    background: #71D881;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
 }
 
 .notification.error {
     background: #ff4444;
+}
+
+.notification.fade-out {
+    animation: slideOut 0.3s ease-out forwards;
 }
 
 @keyframes slideIn {
@@ -809,6 +853,17 @@ body {
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
     }
 }
 
@@ -1075,8 +1130,7 @@ body {
     text-align: right;
 }
 
-
-/* เพิ่ม CSS สำหรับ action bar */
+/* Action bar styles */
 .action-bar {
     position: fixed;
     bottom: 20px;
@@ -1087,10 +1141,12 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
     align-items: center;
+    gap: 20px;
     z-index: 1000;
     transition: all 0.3s ease;
+    min-width: 400px;
 }
 
 .action-bar.hidden {
@@ -1099,6 +1155,12 @@ body {
     pointer-events: none;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Action bar button styles */
 .action-bar button {
     padding: 8px 16px;
     border: 1px solid black;
@@ -1122,4 +1184,51 @@ body {
 #selected-count {
     color: #666;
     margin-right: 10px;
+}
+
+/* Action bar button styles */
+.action-bar button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin: 0 0.25rem;
+}
+
+.action-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-bar .edit-btn {
+    background: var(--success-color, #71D881);
+    color: white;
+    visibility: visible;
+}
+
+.action-bar .edit-btn:hover:not(:disabled) {
+    background: var(--success-dark, #5bb96a);
+}
+
+.action-bar .bookmark-btn {
+    background: var(--primary-color, #3498db);
+    color: white;
+}
+
+.action-bar .bookmark-btn:hover {
+    background: var(--primary-dark, #2980b9);
+}
+
+.action-bar .remove-btn {
+    background: #ff4444;
+    color: white;
+}
+
+.action-bar .remove-btn:hover {
+    background: #cc3333;
 }

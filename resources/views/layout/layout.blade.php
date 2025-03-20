@@ -120,6 +120,11 @@
         @yield('addTransactionPopup')
     </div>
 
+    <!-- Edit Transaction Popup -->
+    <div id="editTransactionPopup" class="popup">
+        @yield('editTransactionPopup')
+    </div>
+
     <!-- Add this new modal -->
     <div id="bookmarkSelectionModal" class="popup">
         <div class="popup-content">

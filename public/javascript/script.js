@@ -342,69 +342,171 @@ function updateActionBar() {
     const actionBar = document.getElementById("action-bar");
     const selectedCount = document.getElementById("selected-count");
     const editButton = document.querySelector(".edit-btn");
+    const bookmarkButton = document.querySelector(".bookmark-btn");
+    const removeButton = document.querySelector(".remove-btn");
     const selectedItems = document.querySelectorAll(".row-checkbox:checked");
-    console.log(selectedItems);
-    console.log("✅ Selected Items:", selectedItems.length);
-    // const selectedRows = [];
-    // selectedItems.forEach((checkbox) => {
-    //     const row = checkbox.closest("tr");
-    //     const cells = row.getElementsByTagName("td");
-
-    //     selectedRows.push({
-    //         transaction_id: checkbox.dataset.id,
-    //         description: cells[1].innerText.trim(),
-    //         date: cells[2].innerText.trim(),
-    //         amount: parseFloat(cells[3].innerText.replace("$", "").trim()),
-    //         type: cells[4].innerText.trim(),
-    //         category: cells[5].innerText.trim(),
-    //     });
-    // });
-
-    // console.log("แถวที่เลือก:", selectedRows);
-    selectedItems.forEach(checkbox => {
-        const dataId = checkbox.dataset.id;
-        console.log("Transaction ID:", dataId);
-    });
     
+    console.log("✅ Selected Items:", selectedItems.length);
 
     const selectedIds = Array.from(selectedItems).map(checkbox => checkbox.dataset.id);
-    console.log("📌 Transaction IDs ที่ถูกเลือก:", selectedIds);
-
-    const tableContainer = document.getElementById('transactionTable');
-    console.log(tableContainer.querySelectorAll('.row-checkbox'));
+    console.log("📌 Selected Transaction IDs:", selectedIds);
 
     if (selectedItems.length > 0) {
+        // Show action bar
         actionBar.classList.remove("hidden");
         actionBar.style.display = "flex";
         selectedCount.textContent = `${selectedItems.length} Item(s)`;
 
-        // จัดการปุ่ม Edit
+        // Edit button - only for single selection
         if (selectedItems.length === 1) {
             editButton.disabled = false;
-            editButton.classList.remove("hidden");
+            editButton.style.display = "flex";
             
-            // ลบ event listener เก่าและเพิ่มใหม่
+            // Replace button to remove old event listeners
             const newEditButton = editButton.cloneNode(true);
             editButton.parentNode.replaceChild(newEditButton, editButton);
             
+            // Add click event for editing
             newEditButton.addEventListener("click", function() {
                 const transactionId = selectedItems[0].getAttribute("data-id");
-                console.log("transaction id = ",transactionId);
+                console.log("transaction id = ", transactionId);
                 if (transactionId) {
                     editTransaction(transactionId);
                 }
             });
         } else {
+            // Disable edit button for multiple selections
             editButton.disabled = true;
-            editButton.classList.add("hidden");
+            editButton.style.display = "none";
         }
+
+        // Bookmark button - enable for any selection
+        const newBookmarkButton = bookmarkButton.cloneNode(true);
+        bookmarkButton.parentNode.replaceChild(newBookmarkButton, bookmarkButton);
+        
+        newBookmarkButton.addEventListener("click", function() {
+            bookmarkSelectedTransactions(selectedIds);
+        });
+
+        // Remove button - enable for any selection
+        const newRemoveButton = removeButton.cloneNode(true);
+        removeButton.parentNode.replaceChild(newRemoveButton, removeButton);
+        
+        newRemoveButton.addEventListener("click", function() {
+            removeSelectedTransactions(selectedIds);
+        });
+
+        // Initialize event listeners
         initializeEventListeners();
     } else {
+        // Hide action bar when no items selected
         actionBar.classList.add("hidden");
         setTimeout(() => {
             actionBar.style.display = "none";
         }, 300);
     }
+}
+
+// Function to bookmark selected transactions
+function bookmarkSelectedTransactions(ids) {
+    if (!ids || ids.length === 0) {
+        console.error('❌ No transaction IDs provided for bookmarking');
+        return;
+    }
+
+    console.log('🔖 Bookmarking transactions:', ids);
+
+    fetch('/transactions/bookmark-multiple', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Uncheck all checkboxes
+            document.querySelectorAll('.row-checkbox:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            // Reset action bar
+            updateActionBar();
+        } else {
+            throw new Error(data.message || 'Failed to bookmark transactions');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showNotification('Error bookmarking transactions: ' + error.message, 'error');
+    });
+}
+
+// Function to remove selected transactions
+function removeSelectedTransactions(ids) {
+    if (!ids || ids.length === 0) {
+        console.error('❌ No transaction IDs provided for removal');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${ids.length} transaction(s)?`)) {
+        return;
+    }
+
+    console.log('🗑️ Removing transactions:', ids);
+
+    fetch('/transactions', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Reload transactions to reflect changes
+            loadTransactions();
+        } else {
+            throw new Error(data.message || 'Failed to delete transactions');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showNotification('Error deleting transactions: ' + error.message, 'error');
+    });
+}
+
+// Function to show notifications
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 2700);
 }
 
 // รวมการจัดการ Event Listeners ไว้ในฟังก์ชันเดียว
@@ -491,10 +593,11 @@ function showEditTransactionPopup(transaction) {
 
         // แสดง popup
         popup.style.display = "flex";
-        popup.style.opacity = "0";
         popup.offsetHeight; // Trigger reflow
-        popup.style.opacity = "1";
         popup.classList.add("active");
+
+        // Initialize form listener
+        initializeEditFormListener();
 
         console.log("✅ Popup should be visible now");
     } catch (error) {
@@ -512,7 +615,6 @@ function hideEditTransactionPopup() {
     }
     
     popup.classList.remove("active");
-    popup.style.opacity = "0";
     setTimeout(() => {
         popup.style.display = "none";
     }, 300);
