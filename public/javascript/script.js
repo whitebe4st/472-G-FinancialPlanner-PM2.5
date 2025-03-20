@@ -545,7 +545,7 @@ function initializeEditFormListener() {
         
         console.log("📦 Sending data:", formDataObject);
         
-        fetch(`/api/transactions/${transactionId}`, {
+        fetch(`/transactions/${transactionId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -575,9 +575,6 @@ function editTransaction(transactionId) {
     const controller = new AbortController();
     currentRequest = controller;
 
-    // Build query string
-    
-
     if (!transactionId) {
         console.error('❌ Transaction ID is missing!');
         alert('Invalid transaction ID!');
@@ -585,7 +582,7 @@ function editTransaction(transactionId) {
     }
 
     // Fetch transaction data with correct API endpoint
-    fetch(`/api/transactions/${transactionId}`)
+    fetch(`/transactions/${transactionId}`)
         .then(response => {
             console.log('📡 API Response:', response);
             if (!response.ok) {
@@ -596,7 +593,7 @@ function editTransaction(transactionId) {
         .then(data => {
             console.log('📦 Transaction data:', data);
             if (data.success) {
-                showEditTransactionPopup(data.data);  // เปลี่ยนจาก data.transaction เป็น data.data
+                showEditTransactionPopup(data.transaction);  // Changed from data.data to data.transaction
             } else {
                 throw new Error(data.message || 'Failed to load transaction');
             }
