@@ -8,6 +8,9 @@
 <div class="content-wrapper" style="padding: 2rem;">
     <h1 style="margin-bottom: 1rem;">Transactions</h1>
     <p style="margin-bottom: 2rem;">Track your finances and achieve your financial goal.</p>
+    
+    <!-- Debug Button -->
+    <button id="debugActionBarBtn" style="background: #ff5722; color: white; padding: 8px 15px; border: none; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">Debug: Toggle Action Bar</button>
 
     <div class="table-container" style="width: 95%; margin: 0 auto;">
         <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -109,6 +112,19 @@
     </div>
 </div>
 
+<style>
+    /* Fix for action bar visibility */
+    .action-bar {
+        visibility: visible;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s;
+    }
+    
+    .action-bar.hidden {
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0.3s;
+    }
+</style>
+
 @push('scripts')
 <script>
 let currentPage = 1;
@@ -121,6 +137,9 @@ let currentFilters = {
 
 // Make the filters globally accessible
 window.currentFilters = currentFilters;
+
+// Ensure updateActionBar is global
+window.updateActionBar = updateActionBar;
 
 function toggleDropdown(id) {
     const dropdown = document.getElementById(id);
@@ -262,9 +281,13 @@ function loadTransactions() {
                 tableContainer.style.opacity = '1';
             });
             attachCheckboxListeners();
+            makeRowsClickableForCheckboxes();
             
             // Update pagination
             updatePaginationControls(data);
+            
+            // Force check for action bar update
+            setTimeout(updateActionBar, 100);
             
             // Log useful debugging info about the request and response
             console.log(`📊 Page ${currentPage} requested, got page ${data.current_page || 'undefined'}`);
@@ -496,13 +519,68 @@ function changePage(page) {
 function attachCheckboxListeners() {
     console.log("🔄 Attaching event listeners to checkboxes...");
 
-    document.querySelectorAll(".row-checkbox").forEach(checkbox => {
-        console.log("✅ Found checkbox - data-id:", checkbox.getAttribute("data-id")); // Debug
-
-        checkbox.addEventListener("change", function () {
-            updateActionBar();
+    // Find all row checkboxes without listeners
+    const checkboxes = document.querySelectorAll(".row-checkbox:not([data-listener-initialized='true'])");
+    console.log(`📋 Found ${checkboxes.length} checkboxes that need listeners`);
+    
+    if (checkboxes.length === 0) {
+        console.log("ℹ️ No new checkboxes found to attach listeners to");
+        return;
+    }
+    
+    // Process each checkbox - use direct event attachment
+    checkboxes.forEach(checkbox => {
+        console.log("Adding listener to checkbox with ID:", checkbox.getAttribute("data-id"));
+        
+        // Mark as initialized to prevent duplicate listeners
+        checkbox.setAttribute('data-listener-initialized', 'true');
+        
+        // REMOVE any existing click handlers to prevent duplicates
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        
+        // Add the click handler directly 
+        newCheckbox.setAttribute('data-listener-initialized', 'true');
+        newCheckbox.addEventListener('click', function() {
+            console.log("Checkbox clicked:", this.getAttribute("data-id"));
+            // Force an update of the action bar
+            setTimeout(updateActionBar, 0);
         });
     });
+    
+    // Also handle the "select all" checkbox with direct DOM handling
+    const selectAllCheckbox = document.getElementById("selectAll");
+    if (selectAllCheckbox) {
+        console.log("Setting up select all checkbox");
+        
+        // Replace the checkbox to remove all existing handlers
+        const newSelectAll = selectAllCheckbox.cloneNode(false);
+        selectAllCheckbox.parentNode.replaceChild(newSelectAll, selectAllCheckbox);
+        
+        // Add direct click handler
+        newSelectAll.addEventListener('click', function() {
+            console.log("Select all toggled:", this.checked);
+            const checkboxes = document.querySelectorAll(".row-checkbox");
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            
+            // Force action bar update
+            setTimeout(updateActionBar, 0);
+        });
+    }
+    
+    // Force an initial action bar update
+    setTimeout(updateActionBar, 0);
+    // Immediately update action bar in case there are already checked checkboxes
+    updateActionBar();
+}
+
+// Named function to use as event listener
+function updateActionBarOnCheckboxChange() {
+    console.log("🔄 Checkbox changed - updating action bar");
+    updateActionBar();
 }
 
 // Close dropdowns when clicking outside
@@ -517,27 +595,97 @@ document.addEventListener('click', function(event) {
 
 // Initial states
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("🚀 DOM Content Loaded - Initializing Transaction Page");
+    console.log("Action Bar Element: ", document.getElementById('action-bar'));
+    
     loadTransactions();
     updateSelectedStates();
+    makeRowsClickableForCheckboxes();
+    
+    // Debug button for action bar
+    document.getElementById('debugActionBarBtn').addEventListener('click', function() {
+        console.log("🔧 Debug button clicked - toggling action bar visibility");
+        const actionBar = document.getElementById('action-bar');
+        
+        if (!actionBar) {
+            console.error("❌ Action bar element not found");
+            return;
+        }
+        
+        console.log("Current action bar state:", {
+            display: actionBar.style.display,
+            hasClass: actionBar.classList.contains('hidden')
+        });
+        
+        // Toggle the action bar class
+        if (actionBar.classList.contains('hidden')) {
+            // Show action bar
+            actionBar.classList.remove('hidden');
+            actionBar.style.display = "flex";
+            actionBar.style.opacity = "1";
+            actionBar.style.transform = "translateX(-50%)";
+            actionBar.style.pointerEvents = "auto";
+        } else {
+            // Hide action bar
+            actionBar.classList.add('hidden');
+            actionBar.style.opacity = "0";
+            actionBar.style.transform = "translate(-50%, 100px)";
+            actionBar.style.pointerEvents = "none";
+        }
+        
+        // Update the text
+        document.getElementById('selected-count').textContent = "Debug Mode";
+        
+        console.log("✅ Action bar should now be toggled");
+    });
+    
+    // Add event listeners for action buttons
+    document.querySelector('.action-buttons').addEventListener('click', function(e) {
+        // Event delegation for the action buttons
+        if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
+            editSelected();
+        } else if (e.target.classList.contains('bookmark-btn') || e.target.closest('.bookmark-btn')) {
+            bookmarkSelected();
+        } else if (e.target.classList.contains('remove-btn') || e.target.closest('.remove-btn')) {
+            removeSelected();
+        }
+    });
+    
+    // Add event delegation for checkboxes
+    document.addEventListener('change', function(event) {
+        // Check if the changed element is a row checkbox
+        if (event.target.classList.contains('row-checkbox')) {
+            console.log("🔄 Checkbox changed via event delegation");
+            updateActionBar();
+        }
+    });
     
     // Safely call initializeEventListeners if it exists
     if (typeof initializeEventListeners === 'function') {
         initializeEventListeners();
     } else {
         console.warn('⚠️ initializeEventListeners is not defined. Make sure script.js is loaded properly.');
-        // Fallback for basic functionality
-        document.querySelectorAll('.action-buttons button').forEach(button => {
-            button.addEventListener('click', function() {
-                if (this.classList.contains('edit-btn')) {
-                    editSelected();
-                } else if (this.classList.contains('bookmark-btn')) {
-                    bookmarkSelected();
-                } else if (this.classList.contains('remove-btn')) {
-                    removeSelected();
-                }
-            });
-        });
     }
+    
+    // Set up a periodic check to ensure event listeners are attached
+    // This helps with dynamic content loading or after AJAX operations
+    setInterval(checkAndReinitialize, 2000);
+    
+    // Force checking for checkboxes periodically for the first few seconds
+    // This helps with content that loads asynchronously
+    let checkCount = 0;
+    const maxChecks = 5;
+    const checkInterval = setInterval(() => {
+        checkCount++;
+        console.log(`🔍 Periodic check for checkboxes (${checkCount}/${maxChecks})`);
+        attachCheckboxListeners();
+        makeRowsClickableForCheckboxes();
+        updateActionBar();
+        
+        if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+        }
+    }, 1000);
 });
 
 // Function to update pagination controls based on response data
@@ -630,29 +778,131 @@ function toggleAllCheckboxes() {
 
 // Function to update the action bar based on selected items
 function updateActionBar() {
-    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
-    const actionBar = document.getElementById('action-bar');
-    const selectedCount = document.getElementById('selected-count');
-    const editBtn = document.querySelector('.action-buttons .edit-btn');
+    console.log("🔄 Running updateActionBar function");
+    
+    const actionBar = document.getElementById("action-bar");
+    const selectedCount = document.getElementById("selected-count");
+    const selectedItems = document.querySelectorAll('.row-checkbox:checked');
     
     if (!actionBar || !selectedCount) {
-        console.warn("⚠️ Action bar elements not found");
+        console.error("❌ Action bar elements not found");
         return;
     }
     
-    const count = selectedCheckboxes.length;
+    const count = selectedItems.length;
     console.log(`✅ Selected count: ${count}`);
     
+    // Force style update to remove any stale display settings
+    actionBar.setAttribute('style', '');
+    
+    const selectedIds = Array.from(selectedItems).map(checkbox => checkbox.getAttribute('data-id'));
+    console.log(`📌 Selected Transaction IDs:`, selectedIds);
+    
     if (count > 0) {
-        actionBar.classList.remove('hidden');
+        console.log("🟢 Showing action bar");
+        
+        // Show action bar
+        actionBar.classList.remove("hidden");
+        
+        // Ensure it's displayed through both CSS and the style attribute
+        actionBar.style.display = "flex";
+        actionBar.style.opacity = "1";
+        actionBar.style.transform = "translateX(-50%)";
+        actionBar.style.pointerEvents = "auto";
+        
+        // Update the item count text
         selectedCount.textContent = `${count} Item${count > 1 ? 's' : ''}`;
         
-        // Enable/disable edit button based on selection count
-        if (editBtn) {
-            editBtn.disabled = count !== 1;
+        // Create fresh buttons to avoid event listener buildup
+        const actionButtons = document.querySelector(".action-buttons");
+        if (!actionButtons) {
+            console.error("❌ Action buttons container not found!");
+            return;
         }
+        
+        // Clear existing buttons
+        actionButtons.innerHTML = '';
+        
+        // Edit button - only enabled for single selection
+        const newEditButton = document.createElement("button");
+        newEditButton.className = "edit-btn";
+        newEditButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+            </svg>
+            Edit
+        `;
+        
+        // Enable or disable based on selection count
+        newEditButton.disabled = count !== 1;
+        
+        // Add click event for editing
+        newEditButton.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            editSelected();
+            return false;
+        };
+        
+        actionButtons.appendChild(newEditButton);
+        
+        // Bookmark button
+        const newBookmarkButton = document.createElement("button");
+        newBookmarkButton.className = "bookmark-btn";
+        newBookmarkButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            Bookmark
+        `;
+        
+        newBookmarkButton.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            bookmarkSelected();
+            return false;
+        };
+        
+        actionButtons.appendChild(newBookmarkButton);
+        
+        // Remove button
+        const newRemoveButton = document.createElement("button");
+        newRemoveButton.className = "remove-btn";
+        newRemoveButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+            </svg>
+            Remove
+        `;
+        
+        newRemoveButton.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            removeSelected();
+            return false;
+        };
+        
+        actionButtons.appendChild(newRemoveButton);
+        
+        console.log("✅ Action bar should now be visible");
     } else {
-        actionBar.classList.add('hidden');
+        console.log("🔴 Hiding action bar");
+        
+        // Hide action bar when no items selected
+        actionBar.classList.add("hidden");
+        
+        // Set both CSS and style properties
+        actionBar.style.opacity = "0";
+        actionBar.style.transform = "translate(-50%, 100px)";
+        actionBar.style.pointerEvents = "none";
+        
+        setTimeout(() => {
+            if (!document.querySelectorAll('.row-checkbox:checked').length) {
+                actionBar.style.display = "none";
+            }
+        }, 300);
+        
+        console.log("✅ Action bar hidden completely");
     }
 }
 
@@ -753,6 +1003,70 @@ function removeSelected() {
         console.error('Error deleting transactions:', error);
         alert('Failed to delete transactions');
     });
+}
+
+// Make the entire row clickable to toggle the checkbox
+function makeRowsClickableForCheckboxes() {
+    console.log("🔄 Making rows clickable for checkboxes...");
+    
+    // Find all rows without click listeners
+    const rows = document.querySelectorAll('#transactionTable tr:not(.head-table):not([data-row-click-listener="true"])');
+    console.log(`📋 Found ${rows.length} rows that need click listeners`);
+    
+    if (rows.length === 0) {
+        console.log("ℹ️ No new rows found to attach listeners to");
+        return;
+    }
+    
+    rows.forEach(row => {
+        row.setAttribute('data-row-click-listener', 'true');
+        
+        row.addEventListener('click', function(e) {
+            // Ignore clicks on the checkbox itself or SVG elements
+            if (e.target.type === 'checkbox' || e.target.tagName === 'svg' || e.target.tagName === 'path') {
+                return;
+            }
+            
+            // Find the checkbox in this row
+            const checkbox = this.querySelector('.row-checkbox');
+            if (checkbox) {
+                // Toggle checkbox state
+                checkbox.checked = !checkbox.checked;
+                
+                // Manually trigger change event
+                const event = new Event('change', { bubbles: true });
+                checkbox.dispatchEvent(event);
+                
+                console.log(`🔄 Row clicked - toggled checkbox for ID: ${checkbox.getAttribute('data-id')}`);
+            }
+        });
+    });
+}
+
+// Function to periodically check for uninitialized elements
+function checkAndReinitialize() {
+    // Check if there are checkboxes without listeners
+    const checkboxes = document.querySelectorAll(".row-checkbox:not([data-listener-initialized='true'])");
+    if (checkboxes.length > 0) {
+        console.log(`🔄 Found ${checkboxes.length} checkboxes without listeners, reattaching...`);
+        attachCheckboxListeners();
+    }
+    
+    // Check if there are rows that need click handlers
+    const rows = document.querySelectorAll('#transactionTable tr:not(.head-table):not([data-row-click-listener="true"])');
+    if (rows.length > 0) {
+        console.log(`🔄 Found ${rows.length} rows without click listeners, setting up...`);
+        makeRowsClickableForCheckboxes();
+    }
+    
+    // Check if the action bar is in the correct state based on checkbox selection
+    const hasCheckedItems = document.querySelectorAll(".row-checkbox:checked").length > 0;
+    const actionBarVisible = !document.getElementById("action-bar").classList.contains("hidden");
+    
+    if (hasCheckedItems !== actionBarVisible) {
+        console.log("⚠️ Action bar state doesn't match checkbox state, updating...");
+        updateActionBar();
+    }
 }
 </script>
 @endpush
@@ -967,3 +1281,234 @@ function removeSelected() {
     </style>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    /* Fix for action bar visibility */
+    .action-bar {
+        visibility: visible;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s;
+    }
+    
+    .action-bar.hidden {
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0.3s;
+    }
+</style>
+@endpush
+
+{{-- Add a direct script to fix checkbox handling in the transaction page --}}
+<script>
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("⚡️ Fix script loaded for transaction page");
+    
+    // Create a MutationObserver to watch for changes in the table
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                // Check if checkboxes were added and attach handlers if needed
+                attachCheckboxHandlers();
+            }
+        });
+    });
+    
+    // Start observing the transaction table for changes
+    const table = document.getElementById('transactionTable');
+    if (table) {
+        observer.observe(table, { childList: true, subtree: true });
+    }
+    
+    // Force initial attachment
+    attachCheckboxHandlers();
+    
+    // Directly fix the debug button
+    const debugBtn = document.getElementById('debugActionBarBtn');
+    if (debugBtn) {
+        debugBtn.onclick = function() {
+            forceShowActionBar();
+        };
+    }
+    
+    // Also fix the global click event for action buttons
+    setupActionBarButtons();
+});
+
+// Function to force show the action bar (for debugging)
+function forceShowActionBar() {
+    console.log("🔧 Forcing action bar to show");
+    const actionBar = document.getElementById('action-bar');
+    if (actionBar) {
+        actionBar.classList.remove('hidden');
+        actionBar.style.display = "flex";
+        actionBar.style.opacity = "1";
+        actionBar.style.transform = "translateX(-50%)";
+        actionBar.style.pointerEvents = "auto";
+        document.getElementById('selected-count').textContent = "Debug Mode";
+    }
+}
+
+// Function to handle action bar visibility
+function updateActionBarVisibility() {
+    console.log("⚡️ Updating action bar visibility");
+    const actionBar = document.getElementById('action-bar');
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    
+    if (!actionBar) return;
+    
+    console.log(`Found ${count} selected checkboxes`);
+    
+    // Update the counter
+    const countElement = document.getElementById('selected-count');
+    if (countElement) {
+        countElement.textContent = `${count} Item${count !== 1 ? 's' : ''}`;
+    }
+    
+    // Enable/disable the edit button based on selection count
+    const editBtn = actionBar.querySelector('.edit-btn');
+    if (editBtn) {
+        editBtn.disabled = count !== 1;
+    }
+    
+    if (count > 0) {
+        // Show action bar
+        actionBar.classList.remove('hidden');
+        actionBar.style.display = "flex";
+        actionBar.style.opacity = "1";
+        actionBar.style.transform = "translateX(-50%)";
+        actionBar.style.pointerEvents = "auto";
+    } else {
+        // Hide action bar
+        actionBar.classList.add('hidden');
+        actionBar.style.opacity = "0";
+        actionBar.style.transform = "translate(-50%, 100px)";
+        actionBar.style.pointerEvents = "none";
+    }
+}
+
+// Function to attach handlers to checkboxes
+function attachCheckboxHandlers() {
+    // Find all checkboxes without handlers
+    const checkboxes = document.querySelectorAll('.row-checkbox:not([data-handler-attached="true"])');
+    console.log(`Found ${checkboxes.length} checkboxes without handlers`);
+    
+    checkboxes.forEach(function(checkbox) {
+        // Mark as having handler attached
+        checkbox.setAttribute('data-handler-attached', 'true');
+        
+        // Add change event listener
+        checkbox.addEventListener('change', function() {
+            console.log("Checkbox changed:", this.checked);
+            updateActionBarVisibility();
+        });
+    });
+    
+    // Handle select all checkbox
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll && !selectAll.hasAttribute('data-handler-attached')) {
+        selectAll.setAttribute('data-handler-attached', 'true');
+        
+        selectAll.addEventListener('change', function() {
+            const isChecked = this.checked;
+            console.log("Select all changed:", isChecked);
+            
+            // Update all row checkboxes
+            document.querySelectorAll('.row-checkbox').forEach(function(checkbox) {
+                checkbox.checked = isChecked;
+            });
+            
+            // Update action bar
+            updateActionBarVisibility();
+        });
+    }
+    
+    // Make rows clickable to toggle checkboxes
+    makeRowsClickable();
+    
+    // Initial update of action bar
+    updateActionBarVisibility();
+}
+
+// Make rows clickable to toggle checkboxes
+function makeRowsClickable() {
+    const rows = document.querySelectorAll('#transactionTable tr:not(.head-table):not([data-clickable="true"])');
+    console.log(`Found ${rows.length} rows to make clickable`);
+    
+    rows.forEach(function(row) {
+        row.setAttribute('data-clickable', 'true');
+        
+        row.addEventListener('click', function(e) {
+            // Don't act if clicking on checkbox or button
+            if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || 
+                e.target.closest('button') || e.target.tagName === 'svg' || 
+                e.target.tagName === 'path') {
+                return;
+            }
+            
+            // Find checkbox in this row
+            const checkbox = this.querySelector('.row-checkbox');
+            if (checkbox) {
+                // Toggle the checkbox
+                checkbox.checked = !checkbox.checked;
+                console.log("Row clicked, toggled checkbox to:", checkbox.checked);
+                
+                // Update action bar
+                updateActionBarVisibility();
+            }
+        });
+    });
+}
+
+// Set up action bar button handlers
+function setupActionBarButtons() {
+    const actionBar = document.getElementById('action-bar');
+    if (!actionBar) return;
+    
+    // Edit button
+    const editBtn = actionBar.querySelector('.edit-btn');
+    if (editBtn) {
+        editBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedCheckbox = document.querySelector('.row-checkbox:checked');
+            if (selectedCheckbox) {
+                const id = selectedCheckbox.getAttribute('data-id');
+                console.log("Edit clicked for ID:", id);
+                if (typeof editSelected === 'function') {
+                    editSelected();
+                } else {
+                    console.log("editSelected function not found");
+                }
+            }
+        });
+    }
+    
+    // Bookmark button
+    const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
+    if (bookmarkBtn) {
+        bookmarkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Bookmark clicked");
+            if (typeof bookmarkSelected === 'function') {
+                bookmarkSelected();
+            } else {
+                console.log("bookmarkSelected function not found");
+            }
+        });
+    }
+    
+    // Remove button
+    const removeBtn = actionBar.querySelector('.remove-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Remove clicked");
+            if (typeof removeSelected === 'function') {
+                removeSelected();
+            } else {
+                console.log("removeSelected function not found");
+            }
+        });
+    }
+}
+</script>
