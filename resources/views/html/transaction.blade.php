@@ -9,9 +9,6 @@
     <h1 style="margin-bottom: 1rem;">Transactions</h1>
     <p style="margin-bottom: 2rem;">Track your finances and achieve your financial goal.</p>
     
-    <!-- Debug Button -->
-    <button id="debugActionBarBtn" style="background: #ff5722; color: white; padding: 8px 15px; border: none; border-radius: 4px; margin-bottom: 20px; cursor: pointer;">Debug: Toggle Action Bar</button>
-
     <div class="table-container" style="width: 95%; margin: 0 auto;">
         <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h2>Transaction History</h2>
@@ -109,14 +106,10 @@
                 </button>
             </div>
         </div>
-        
-        <!-- Emergency Reset Button - only appears if loading gets stuck -->
-        <div class="emergency-reset" onclick="resetLoadingStates()">
-            <b>Loading Stuck?</b> Click to Reset
-        </div>
     </div>
 </div>
 
+@push('styles')
 <style>
     /* Fix for action bar visibility */
     .action-bar {
@@ -142,10 +135,27 @@
         vertical-align: middle;
     }
     
+    /* Ensure loading animation is always on top */
+    #loadingAnimation {
+        position: relative;
+        z-index: 1000; 
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 90%;
+    }
+    
+    /* Ensure the opacity transitions properly */
+    #transactionTable {
+        transition: opacity 0.3s ease;
+    }
+    
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
 </style>
+@endpush
 
 @push('scripts')
 <script>
@@ -693,47 +703,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSelectedStates();
     makeRowsClickableForCheckboxes();
     
-    // Ensure loading states are reset if page has been loaded for a while
-    setTimeout(function() {
-        if (loadingAnimation && loadingAnimation.style.display === 'block') {
-            console.warn("⚠️ Loading animation still visible after 10 seconds - forcing reset");
-            resetLoadingStates();
-        }
-    }, 10000);
-    
-    // Debug button for action bar
-    const debugBtn = document.getElementById('debugActionBarBtn');
-    if (debugBtn) {
-        debugBtn.addEventListener('click', function() {
-            console.log("🔧 Debug button clicked - toggling action bar visibility");
-            const actionBar = document.getElementById('action-bar');
-            
-            if (!actionBar) {
-                console.error("❌ Action bar element not found");
-                return;
-            }
-            
-            // Toggle the action bar class
-            if (actionBar.classList.contains('hidden')) {
-                // Show action bar
-                actionBar.classList.remove('hidden');
-                actionBar.style.display = "flex";
-                actionBar.style.opacity = "1";
-                actionBar.style.transform = "translateX(-50%)";
-                actionBar.style.pointerEvents = "auto";
-            } else {
-                // Hide action bar
-                actionBar.classList.add('hidden');
-                actionBar.style.opacity = "0";
-                actionBar.style.transform = "translate(-50%, 100px)";
-                actionBar.style.pointerEvents = "none";
-            }
-            
-            // Update the text
-            document.getElementById('selected-count').textContent = "Debug Mode";
-        });
-    }
-    
     // Add event listeners for action buttons
     const actionButtons = document.querySelector('.action-buttons');
     if (actionButtons) {
@@ -761,16 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.classList.contains('row-checkbox')) {
             console.log("🔄 Checkbox changed via event delegation");
             updateActionBar();
-        }
-    });
-    
-    // Add emergency reset keyboard shortcut
-    document.addEventListener('keydown', function(e) {
-        // Alt+R to reset loading states
-        if (e.altKey && e.key === 'r') {
-            console.log("⚠️ Emergency reset triggered via keyboard shortcut (Alt+R)");
-            e.preventDefault();
-            resetLoadingStates();
         }
     });
     
@@ -2295,34 +2254,6 @@ window.resetLoadingStates = resetLoadingStates;
     /* Ensure the opacity transitions properly */
     #transactionTable {
         transition: opacity 0.3s ease;
-    }
-    
-    /* Emergency button for clearing loading state - only visible when needed */
-    .emergency-reset {
-        display: none;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #ff5722;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 4px;
-        z-index: 9999;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    /* Show emergency button when loading animation is visible for more than 5 seconds */
-    #loadingAnimation:not([style*="display: none"]) ~ .emergency-reset,
-    #loadingAnimation[style*="display: block"] ~ .emergency-reset {
-        display: block !important;
-        animation: fadeIn 0.5s ease forwards;
-        animation-delay: 5s; /* Wait 5 seconds before showing */
-        opacity: 0;
-    }
-    
-    @keyframes fadeIn {
-        to { opacity: 1; }
     }
     
     @keyframes spin {
