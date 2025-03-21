@@ -117,6 +117,9 @@ let currentFilters = {
     order: 'desc'
 };
 
+// Make the filters globally accessible
+window.currentFilters = currentFilters;
+
 function toggleDropdown(id) {
     const dropdown = document.getElementById(id);
     const allDropdowns = document.getElementsByClassName('dropdown-content');
@@ -452,19 +455,27 @@ function changePage(page) {
     if (nextPageBtn) nextPageBtn.disabled = true;
     
     // Add visual feedback for the buttons
-    if (page < currentPage) {
+    if (page < window.currentPage) {
         if (prevPageBtn) prevPageBtn.style.opacity = '0.7'; // Visual feedback for clicked button
-    } else if (page > currentPage) {
+    } else if (page > window.currentPage) {
         if (nextPageBtn) nextPageBtn.style.opacity = '0.7'; // Visual feedback for clicked button
     }
     
-    currentPage = page;
+    // Update the global currentPage
+    window.currentPage = page;
     
     // Update current page indicator
     const currentPageNum = document.getElementById('currentPageNum');
     if (currentPageNum) currentPageNum.textContent = page;
     
-    loadTransactions();
+    // Load transactions for the new page
+    loadTransactions({
+        type: currentFilters.type || 'all',
+        time: currentFilters.time || 'today',
+        sort: currentFilters.sort || 'date',
+        order: currentFilters.order || 'desc',
+        page: page
+    });
     
     // Reset button opacity after a short delay
     setTimeout(() => {
@@ -526,7 +537,8 @@ function updatePaginationControls(data) {
         currentPage: data.current_page,
         lastPage: data.last_page,
         total: data.total,
-        perPage: data.per_page
+        perPage: data.per_page,
+        dataCount: data.data?.length || 0
     });
 
     const prevPageBtn = document.getElementById('prevPageBtn');
@@ -539,22 +551,21 @@ function updatePaginationControls(data) {
         return;
     }
     
+    // Get the actual values from the response
+    const currentPage = data.current_page || 1;
+    const lastPage = data.last_page || 1;
+    const total = data.total || 0;
+    const hasNextPage = currentPage < lastPage;
+    
     // Update the current page indicator
-    currentPageNum.textContent = data.current_page || 1;
+    currentPageNum.textContent = currentPage;
     
-    // Always show page indicator with forced "more pages" messaging
-    // This is a temporary override to test if there are indeed more pages
+    // Show the page indicator with accurate information
     pageIndicator.style.display = 'inline';
+    pageIndicator.innerHTML = `Page <span id="currentPageNum">${currentPage}</span> of ${lastPage} (${total} total)`;
     
-    // Override the pagination text to indicate we're forcing pagination
-    if (data.total == 0) {
-        pageIndicator.innerHTML = `Page <span id="currentPageNum">${data.current_page}</span> (Testing pagination)`;
-    } else {
-        pageIndicator.innerHTML = `Page <span id="currentPageNum">${data.current_page}</span> of ${Math.max(data.last_page, 2)} (${data.total} total)`;
-    }
-    
-    // Add special styling for buttons when at limits
-    if (data.current_page <= 1) {
+    // Set button state based on current page position
+    if (currentPage <= 1) {
         prevPageBtn.disabled = true;
         prevPageBtn.classList.add('disabled');
     } else {
@@ -562,12 +573,16 @@ function updatePaginationControls(data) {
         prevPageBtn.classList.remove('disabled');
     }
     
-    // ALWAYS enable the next button regardless of data.last_page
-    // This is a temporary override to test if there are more pages
-    nextPageBtn.disabled = false;
-    nextPageBtn.classList.remove('disabled');
+    // Only enable next button if there is a next page
+    if (hasNextPage) {
+        nextPageBtn.disabled = false;
+        nextPageBtn.classList.remove('disabled');
+    } else {
+        nextPageBtn.disabled = true;
+        nextPageBtn.classList.add('disabled');
+    }
     
-    console.log(`✅ Pagination updated - Prev: ${!prevPageBtn.disabled}, Next: ${!nextPageBtn.disabled}`);
+    console.log(`✅ Pagination updated - Current page: ${currentPage}, Last page: ${lastPage}, Has next page: ${hasNextPage}`);
 }
 
 // Function to toggle all checkboxes in the transaction table
