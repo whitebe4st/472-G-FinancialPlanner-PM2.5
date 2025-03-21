@@ -109,6 +109,11 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Emergency Reset Button - only appears if loading gets stuck -->
+        <div class="emergency-reset" onclick="resetLoadingStates()">
+            <b>Loading Stuck?</b> Click to Reset
+        </div>
     </div>
 </div>
 
@@ -242,6 +247,23 @@ function loadTransactions() {
         return;
     }
     
+    // Clear any existing content in the table container to prevent stale data
+    const existingCheckboxCount = document.querySelectorAll('.row-checkbox:checked').length;
+    if (existingCheckboxCount > 0) {
+        console.log(`⚠️ ${existingCheckboxCount} checkboxes were checked before reload`);
+    }
+    
+    // Clear currentRequest in case there's a lingering one
+    if (window.currentRequest) {
+        try {
+            window.currentRequest.abort();
+            console.log("⚠️ Aborted previous request");
+        } catch (e) {
+            console.error("Error aborting previous request:", e);
+        }
+        window.currentRequest = null;
+    }
+    
     // Show loading animation and hide table
     tableContainer.style.opacity = '0';
     loadingAnimation.style.display = 'block';
@@ -263,12 +285,6 @@ function loadTransactions() {
     const url = `/api/transactions?${urlParams.toString()}`;
     console.log(`📡 API URL: ${url}`);
     
-    // Abort any ongoing fetch requests
-    if (window.currentRequest) {
-        console.log("⚠️ Aborting previous request");
-        window.currentRequest.abort();
-    }
-    
     // Create a new AbortController
     window.currentRequest = new AbortController();
     const signal = window.currentRequest.signal;
@@ -278,6 +294,7 @@ function loadTransactions() {
         if (window.currentRequest) {
             console.log("⚠️ Request timeout - aborting");
             window.currentRequest.abort();
+            window.currentRequest = null;
             
             // Show error message
             loadingAnimation.style.display = 'none';
@@ -346,37 +363,42 @@ function loadTransactions() {
         .catch(error => {
             clearTimeout(timeout);
             
-            // If this is an AbortError, we can ignore it
-            if (error.name === 'AbortError') {
-                console.log('🛑 Request was aborted - likely replaced by a newer request');
-                return;
-            }
-            
             // Clear the current request reference
             window.currentRequest = null;
             
-            console.error('❌ Error loading transactions:', error);
+            // If this is an AbortError, we can ignore it if it's not from our timeout
+            if (error.name === 'AbortError') {
+                console.log('🛑 Request was aborted');
+            } else {
+                console.error('❌ Error loading transactions:', error);
+            }
+            
+            // Always ensure loading animation is hidden and some content is shown
             loadingAnimation.style.display = 'none';
-            tableContainer.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #dc3545;">
-                    <p>Error loading transactions</p>
-                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</p>
-                    <details style="margin-top: 1rem; text-align: left; max-width: 600px; margin: 1rem auto; padding: 1rem; background: #f8f8f8; border-radius: 4px;">
-                        <summary style="cursor: pointer; font-weight: bold;">Debug Info</summary>
-                        <p><strong>Error Type:</strong> ${error.name}</p>
-                        <p><strong>API URL:</strong> ${url}</p>
-                        <p><strong>Applied Filters:</strong></p>
-                        <pre style="overflow-x: auto; padding: 0.5rem; background: #f0f0f0; font-size: 12px;">${JSON.stringify(currentFilters, null, 2)}</pre>
-                        <p><strong>Browser Info:</strong> ${navigator.userAgent}</p>
-                    </details>
-                    <div style="margin-top: 1rem;">
-                        <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                            Try Again
-                        </button>
-                    </div>
-                </div>
-            `;
             tableContainer.style.opacity = '1';
+            
+            // Only show error message if this wasn't a silent abort (like page change)
+            if (error.name !== 'AbortError' || window.showLoadErrors === true) {
+                tableContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                        <p>Error loading transactions</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</p>
+                        <details style="margin-top: 1rem; text-align: left; max-width: 600px; margin: 1rem auto; padding: 1rem; background: #f8f8f8; border-radius: 4px;">
+                            <summary style="cursor: pointer; font-weight: bold;">Debug Info</summary>
+                            <p><strong>Error Type:</strong> ${error.name}</p>
+                            <p><strong>API URL:</strong> ${url}</p>
+                            <p><strong>Applied Filters:</strong></p>
+                            <pre style="overflow-x: auto; padding: 0.5rem; background: #f0f0f0; font-size: 12px;">${JSON.stringify(currentFilters, null, 2)}</pre>
+                            <p><strong>Browser Info:</strong> ${navigator.userAgent}</p>
+                        </details>
+                        <div style="margin-top: 1rem;">
+                            <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
         });
 }
 
@@ -655,12 +677,29 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showEditTransactionPopup = showEditTransactionPopup;
     window.hideEditTransactionPopup = hideEditTransactionPopup;
     window.initializeEditFormListener = initializeEditFormListener;
+    window.resetLoadingStates = resetLoadingStates;
+    window.loadTransactions = loadTransactions;
     
     console.log("Action Bar Element: ", document.getElementById('action-bar'));
     
+    // Make sure no loading animations are visible at start
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    if (loadingAnimation) {
+        loadingAnimation.style.display = 'none';
+    }
+    
+    // Initialize core functionality
     loadTransactions();
     updateSelectedStates();
     makeRowsClickableForCheckboxes();
+    
+    // Ensure loading states are reset if page has been loaded for a while
+    setTimeout(function() {
+        if (loadingAnimation && loadingAnimation.style.display === 'block') {
+            console.warn("⚠️ Loading animation still visible after 10 seconds - forcing reset");
+            resetLoadingStates();
+        }
+    }, 10000);
     
     // Debug button for action bar
     const debugBtn = document.getElementById('debugActionBarBtn');
@@ -724,6 +763,18 @@ document.addEventListener('DOMContentLoaded', function() {
             updateActionBar();
         }
     });
+    
+    // Add emergency reset keyboard shortcut
+    document.addEventListener('keydown', function(e) {
+        // Alt+R to reset loading states
+        if (e.altKey && e.key === 'r') {
+            console.log("⚠️ Emergency reset triggered via keyboard shortcut (Alt+R)");
+            e.preventDefault();
+            resetLoadingStates();
+        }
+    });
+    
+    console.log("✅ Transaction page initialization complete");
 });
 
 // Function to update pagination controls based on response data
@@ -985,6 +1036,7 @@ function bookmarkSelected() {
     
     if (selectedCheckboxes.length === 0) {
         console.warn("⚠️ No transactions selected for bookmarking");
+        alert("Please select at least one transaction to bookmark");
         return;
     }
     
@@ -993,6 +1045,16 @@ function bookmarkSelected() {
     );
     
     console.log(`🔖 Bookmarking ${ids.length} transactions: `, ids);
+    
+    // Disable bookmark button and show loading state
+    const actionBar = document.getElementById('action-bar');
+    if (actionBar) {
+        const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
+        if (bookmarkBtn) {
+            bookmarkBtn.disabled = true;
+            bookmarkBtn.innerHTML = '<div class="spinner-mini"></div> Bookmarking...';
+        }
+    }
     
     // Call the bookmark API endpoint
     fetch('/transactions/bookmark-multiple', {
@@ -1006,6 +1068,21 @@ function bookmarkSelected() {
     .then(response => response.json())
     .then(data => {
         console.log('Bookmark response:', data);
+        
+        // Reset the bookmark button state
+        if (actionBar) {
+            const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
+            if (bookmarkBtn) {
+                bookmarkBtn.disabled = false;
+                bookmarkBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    Bookmark
+                `;
+            }
+        }
+        
         if (data.success) {
             alert(data.message);
         } else {
@@ -1014,7 +1091,22 @@ function bookmarkSelected() {
     })
     .catch(error => {
         console.error('Error bookmarking transactions:', error);
-        alert('Failed to bookmark transactions');
+        
+        // Reset the bookmark button state
+        if (actionBar) {
+            const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
+            if (bookmarkBtn) {
+                bookmarkBtn.disabled = false;
+                bookmarkBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    Bookmark
+                `;
+            }
+        }
+        
+        alert('Failed to bookmark transactions: ' + error.message);
     });
 }
 
@@ -1037,6 +1129,24 @@ function removeSelected() {
     
     console.log(`🗑️ Removing ${ids.length} transactions: `, ids);
     
+    // Disable any buttons to prevent multiple submissions
+    const actionBar = document.getElementById('action-bar');
+    if (actionBar) {
+        const buttons = actionBar.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.disabled = true;
+            if (button.classList.contains('remove-btn')) {
+                button.innerHTML = '<div class="spinner-mini"></div> Deleting...';
+            }
+        });
+    }
+    
+    // Show loading animation
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    if (loadingAnimation) {
+        loadingAnimation.style.display = 'block';
+    }
+    
     // Call the delete API endpoint
     fetch('/transactions', {
         method: 'DELETE',
@@ -1051,15 +1161,59 @@ function removeSelected() {
         console.log('Delete response:', data);
         if (data.success) {
             alert(data.message);
-            // Reload transactions to update the table
-            loadTransactions();
+            
+            // Completely refresh the page instead of just reloading transactions
+            window.location.reload();
         } else {
+            // Re-enable buttons
+            if (actionBar) {
+                const buttons = actionBar.querySelectorAll('button');
+                buttons.forEach(button => {
+                    button.disabled = false;
+                    if (button.classList.contains('remove-btn')) {
+                        button.innerHTML = `
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                            </svg>
+                            Remove
+                        `;
+                    }
+                });
+            }
+            
+            // Hide loading animation
+            if (loadingAnimation) {
+                loadingAnimation.style.display = 'none';
+            }
+            
             alert('Error: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error deleting transactions:', error);
-        alert('Failed to delete transactions');
+        
+        // Re-enable buttons
+        if (actionBar) {
+            const buttons = actionBar.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.disabled = false;
+                if (button.classList.contains('remove-btn')) {
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                        </svg>
+                        Remove
+                    `;
+                }
+            });
+        }
+        
+        // Hide loading animation
+        if (loadingAnimation) {
+            loadingAnimation.style.display = 'none';
+        }
+        
+        alert('Failed to delete transactions: ' + error.message);
     });
 }
 
@@ -1660,7 +1814,29 @@ function hideEditTransactionPopup() {
         const form = document.getElementById('editTransactionForm');
         if (form) {
             form.reset();
+            
+            // Also re-enable any disabled buttons
+            const buttons = form.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.disabled = false;
+                // Reset any buttons with loading indicators
+                if (button.innerHTML.includes('spinner-mini')) {
+                    if (button.type === 'submit') {
+                        button.innerHTML = 'Save';
+                    } else {
+                        button.innerHTML = 'Cancel';
+                    }
+                }
+            });
         }
+        
+        // Remove any popup-related error messages
+        const errorMessages = document.querySelectorAll('.form-error-message');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // Reset any input fields with error styling
+        const errorInputs = document.querySelectorAll('.input-error');
+        errorInputs.forEach(input => input.classList.remove('input-error'));
     }, 300);
     
     // Ensure the action bar is properly updated
@@ -1716,7 +1892,7 @@ function initializeEditFormListener() {
             return;
         }
         
-        // Send the update request
+        // SIMPLIFIED APPROACH: Send the update request and refresh page on success
         fetch(`/transactions/${transactionId}`, {
             method: 'PUT',
             headers: {
@@ -1750,19 +1926,20 @@ function initializeEditFormListener() {
                 // Success message
                 alert('Transaction updated successfully!');
                 
+                // Reset button state
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+                
                 // Hide the popup
-                hideEditTransactionPopup();
+                const popup = document.getElementById("editTransactionPopup");
+                if (popup) {
+                    popup.classList.remove("active");
+                    popup.style.display = "none";
+                }
                 
-                // Reload the data
-                setTimeout(() => {
-                    // Reset button state before reloading
-                    submitButton.innerHTML = originalButtonText;
-                    submitButton.disabled = false;
-                    
-                    loadTransactions();
-                }, 100);
-                
-                // Prevent any continuation of the promise chain
+                // COMPLETELY REFRESH THE PAGE INSTEAD OF TRYING TO UPDATE
+                console.log("🔄 Refreshing page to show updated data");
+                window.location.reload();
                 return;
             } else {
                 throw new Error(data.message || 'Failed to update transaction');
@@ -1783,12 +1960,87 @@ function initializeEditFormListener() {
     if (cancelButton) {
         cancelButton.addEventListener('click', function(e) {
             e.preventDefault();
-            hideEditTransactionPopup();
+            const popup = document.getElementById("editTransactionPopup");
+            if (popup) {
+                popup.classList.remove("active");
+                setTimeout(() => {
+                    popup.style.display = "none";
+                }, 300);
+            }
         });
     }
     
     console.log("✅ Edit form listeners initialized");
 }
+
+// Global function to reset any stuck loading states - can be called from console for debugging
+function resetLoadingStates() {
+    console.log("🛠️ Resetting all loading states");
+    
+    // Reset loading animation
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    if (loadingAnimation) {
+        loadingAnimation.style.display = 'none';
+    }
+    
+    // Show table container
+    const tableContainer = document.getElementById('transactionTable');
+    if (tableContainer) {
+        tableContainer.style.opacity = '1';
+    }
+    
+    // Reset any spinning buttons
+    const spinningButtons = document.querySelectorAll('button:has(.spinner-mini)');
+    spinningButtons.forEach(button => {
+        // Find the button's default text or use a fallback
+        const buttonText = button.getAttribute('data-original-text') || 
+                        button.classList.contains('edit-btn') ? 'Edit' :
+                        button.classList.contains('remove-btn') ? 'Remove' :
+                        button.classList.contains('bookmark-btn') ? 'Bookmark' : 
+                        button.type === 'submit' ? 'Submit' : 'Button';
+        
+        // Remove spinner and restore text
+        button.innerHTML = buttonText;
+        button.disabled = false;
+    });
+    
+    // Clear any pending requests
+    if (window.currentRequest) {
+        try {
+            window.currentRequest.abort();
+        } catch (e) {
+            console.error("Error aborting request:", e);
+        }
+        window.currentRequest = null;
+    }
+    
+    // Hide all popups
+    const popups = document.querySelectorAll('.popup-content');
+    popups.forEach(popup => {
+        popup.style.display = 'none';
+    });
+    
+    console.log("✅ All loading states have been reset");
+    
+    // Force a reload of transactions as a last resort
+    setTimeout(() => {
+        if (typeof loadTransactions === 'function') {
+            loadTransactions();
+        }
+    }, 500);
+}
+
+// Attach a keyboard shortcut (Alt+R) to reset loading states in case of emergency
+document.addEventListener('keydown', function(e) {
+    // Alt+R to reset loading states
+    if (e.altKey && e.key === 'r') {
+        e.preventDefault();
+        resetLoadingStates();
+    }
+});
+
+// Register the reset function globally
+window.resetLoadingStates = resetLoadingStates;
 </script>
 @endpush
 
@@ -2027,6 +2279,50 @@ function initializeEditFormListener() {
         animation: spin 1s ease-in-out infinite;
         margin-right: 5px;
         vertical-align: middle;
+    }
+    
+    /* Ensure loading animation is always on top */
+    #loadingAnimation {
+        position: relative;
+        z-index: 1000; 
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 90%;
+    }
+    
+    /* Ensure the opacity transitions properly */
+    #transactionTable {
+        transition: opacity 0.3s ease;
+    }
+    
+    /* Emergency button for clearing loading state - only visible when needed */
+    .emergency-reset {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #ff5722;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        z-index: 9999;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Show emergency button when loading animation is visible for more than 5 seconds */
+    #loadingAnimation:not([style*="display: none"]) ~ .emergency-reset,
+    #loadingAnimation[style*="display: block"] ~ .emergency-reset {
+        display: block !important;
+        animation: fadeIn 0.5s ease forwards;
+        animation-delay: 5s; /* Wait 5 seconds before showing */
+        opacity: 0;
+    }
+    
+    @keyframes fadeIn {
+        to { opacity: 1; }
     }
     
     @keyframes spin {
