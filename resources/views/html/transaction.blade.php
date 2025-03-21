@@ -237,7 +237,12 @@ function loadTransactions() {
     const tableContainer = document.getElementById('transactionTable');
     const loadingAnimation = document.getElementById('loadingAnimation');
     
-    // Show loading animation
+    if (!tableContainer || !loadingAnimation) {
+        console.error("❌ Required DOM elements not found");
+        return;
+    }
+    
+    // Show loading animation and hide table
     tableContainer.style.opacity = '0';
     loadingAnimation.style.display = 'block';
     
@@ -268,8 +273,32 @@ function loadTransactions() {
     window.currentRequest = new AbortController();
     const signal = window.currentRequest.signal;
     
+    // Set a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+        if (window.currentRequest) {
+            console.log("⚠️ Request timeout - aborting");
+            window.currentRequest.abort();
+            
+            // Show error message
+            loadingAnimation.style.display = 'none';
+            tableContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                    <p>Error: Request timed out</p>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
+            tableContainer.style.opacity = '1';
+        }
+    }, 15000); // 15 seconds timeout
+    
     fetch(url, { signal })
         .then(response => {
+            clearTimeout(timeout);
+            
             if (!response.ok) {
                 console.error(`❌ Server response not OK: ${response.status} ${response.statusText}`);
                 throw new Error(`Server returned ${response.status}: ${response.statusText}`);
@@ -294,23 +323,29 @@ function loadTransactions() {
             // Hide loading animation and show table
             loadingAnimation.style.display = 'none';
             tableContainer.innerHTML = generateTableHTML(data);
+            
+            // Make sure the table becomes visible
             requestAnimationFrame(() => {
                 tableContainer.style.opacity = '1';
             });
-            attachCheckboxListeners();
-            makeRowsClickableForCheckboxes();
+            
+            // Initialize table functionality
+            setTimeout(() => {
+                attachCheckboxListeners();
+                makeRowsClickableForCheckboxes();
+                updateActionBar();
+            }, 100);
             
             // Update pagination
             updatePaginationControls(data);
-            
-            // Force check for action bar update
-            setTimeout(updateActionBar, 100);
             
             // Log useful debugging info about the request and response
             console.log(`📊 Page ${currentPage} requested, got page ${data.current_page || 'undefined'}`);
             console.log(`📊 Total items: ${data.total || 0}, Items in response: ${data.data?.length || 0}`);
         })
         .catch(error => {
+            clearTimeout(timeout);
+            
             // If this is an AbortError, we can ignore it
             if (error.name === 'AbortError') {
                 console.log('🛑 Request was aborted - likely replaced by a newer request');
@@ -1560,22 +1595,34 @@ function showEditTransactionPopup(transaction) {
     }
 
     try {
+        // Ensure the transaction has all needed properties
+        if (!transaction || !transaction.transaction_id) {
+            throw new Error("Invalid transaction data");
+        }
+        
         // Fill form fields
         document.getElementById("edit_id").value = transaction.transaction_id;
-        document.getElementById("edit_description").value = transaction.description;
-        document.getElementById("edit_amount").value = transaction.amount;
-        document.getElementById("edit_type").value = transaction.type;
-        document.getElementById("edit_category").value = transaction.category;
+        document.getElementById("edit_description").value = transaction.description || '';
+        document.getElementById("edit_amount").value = transaction.amount || '0';
+        document.getElementById("edit_type").value = transaction.type || 'expense';
+        document.getElementById("edit_category").value = transaction.category || '';
         
         // Format date properly
-        let transactionDate = transaction.transaction_date;
+        let transactionDate = transaction.transaction_date || '';
         if (transactionDate && transactionDate.includes('T')) {
             transactionDate = transactionDate.split('T')[0];
         }
         document.getElementById("edit_transaction_date").value = transactionDate;
 
-        // Show popup
+        // Make sure the popup is ready to be shown
+        popup.style.opacity = "0";
         popup.style.display = "flex";
+        
+        // Trigger a reflow before adding the active class for proper animation
+        void popup.offsetWidth;
+        
+        // Now fade it in
+        popup.style.opacity = "1";
         setTimeout(() => {
             popup.classList.add("active");
         }, 10);
@@ -1587,6 +1634,9 @@ function showEditTransactionPopup(transaction) {
     } catch (error) {
         console.error("❌ Error while populating form:", error);
         alert("Error showing edit form: " + error.message);
+        
+        // Make sure to hide the popup if there was an error
+        popup.style.display = "none";
     }
 }
 
@@ -1599,10 +1649,26 @@ function hideEditTransactionPopup() {
         return;
     }
     
+    // First remove the active class
     popup.classList.remove("active");
+    
+    // Then hide it after a short delay
     setTimeout(() => {
         popup.style.display = "none";
+        
+        // Reset the form to prevent stale data
+        const form = document.getElementById('editTransactionForm');
+        if (form) {
+            form.reset();
+        }
     }, 300);
+    
+    // Ensure the action bar is properly updated
+    setTimeout(() => {
+        if (typeof updateActionBar === 'function') {
+            updateActionBar();
+        }
+    }, 500);
 }
 
 // Implementation of editFormListener
@@ -1688,7 +1754,16 @@ function initializeEditFormListener() {
                 hideEditTransactionPopup();
                 
                 // Reload the data
-                loadTransactions();
+                setTimeout(() => {
+                    // Reset button state before reloading
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                    
+                    loadTransactions();
+                }, 100);
+                
+                // Prevent any continuation of the promise chain
+                return;
             } else {
                 throw new Error(data.message || 'Failed to update transaction');
             }
@@ -1961,6 +2036,7 @@ function initializeEditFormListener() {
 @endpush
 
 {{-- Add a direct script to fix checkbox handling in the transaction page --}}
+@push('scripts')
 <script>
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -2272,4 +2348,4 @@ function fixActionButtons() {
     }
 }
 </script>
-</script>
+@endpush
