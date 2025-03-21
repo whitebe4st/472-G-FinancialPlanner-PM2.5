@@ -71,9 +71,16 @@
             <!-- Table content will be loaded here -->
         </div>
 
-        <div class="addBar-btn">
-            <button onclick="showAddTransactionPopup()">+</button>
+        <!-- Pagination Container -->
+        <div class="pagination-container" style="display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px;">
+            <button id="prevPageBtn" class="pagination-btn" onclick="changePage(currentPage - 1)" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&lt;</button>
+            <div class="addBar-btn">
+                <button onclick="showAddTransactionPopup()">+</button>
+            </div>
+            <button id="nextPageBtn" class="pagination-btn" onclick="changePage(currentPage + 1)" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&gt;</button>
+            <span id="pageIndicator" class="page-indicator" style="font-size: 14px; color: #666; margin-left: 10px; font-weight: 500;">Page <span id="currentPageNum">1</span></span>
         </div>
+
         <div id="action-bar" class="action-bar hidden">
             <span id="selected-count">0 Items</span>
             <div class="action-buttons">
@@ -193,9 +200,56 @@ function loadTransactions() {
     tableContainer.style.opacity = '0';
     loadingAnimation.style.display = 'block';
     
-    fetch(`/api/transactions?page=${currentPage}&${new URLSearchParams(currentFilters)}`)
-        .then(response => response.json())
+    // Create the base URL
+    let urlParams = new URLSearchParams();
+    urlParams.append('page', currentPage);
+    
+    // Add standard filters
+    for (const [key, value] of Object.entries(currentFilters)) {
+        urlParams.append(key, value);
+    }
+    
+    // Add special debug parameters for pagination
+    urlParams.append('per_page', 10); // Force 10 items per page
+    urlParams.append('debug', 'true'); // Add debug flag
+    urlParams.append('force_pagination', 'true'); // Try to force pagination
+    
+    const url = `/api/transactions?${urlParams.toString()}`;
+    console.log(`📡 API URL: ${url}`);
+    
+    // Abort any ongoing fetch requests
+    if (window.currentRequest) {
+        console.log("⚠️ Aborting previous request");
+        window.currentRequest.abort();
+    }
+    
+    // Create a new AbortController
+    window.currentRequest = new AbortController();
+    const signal = window.currentRequest.signal;
+    
+    fetch(url, { signal })
+        .then(response => {
+            if (!response.ok) {
+                console.error(`❌ Server response not OK: ${response.status} ${response.statusText}`);
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            console.log(`📥 Response status: ${response.status}`);
+            return response.json();
+        })
         .then(data => {
+            console.log(`✅ API response data:`, data);
+            
+            // Store the pagination data for future reference
+            window.lastKnownPageData = {
+                total: data.total || 0,
+                current_page: data.current_page || currentPage,
+                last_page: data.last_page || 1,
+                per_page: data.per_page || 10
+            };
+            
+            // Clear the current request reference
+            window.currentRequest = null;
+            
             // Hide loading animation and show table
             loadingAnimation.style.display = 'none';
             tableContainer.innerHTML = generateTableHTML(data);
@@ -203,18 +257,98 @@ function loadTransactions() {
                 tableContainer.style.opacity = '1';
             });
             attachCheckboxListeners();
+            
+            // Update pagination
+            updatePaginationControls(data);
+            
+            // Log useful debugging info about the request and response
+            console.log(`📊 Page ${currentPage} requested, got page ${data.current_page || 'undefined'}`);
+            console.log(`📊 Total items: ${data.total || 0}, Items in response: ${data.data?.length || 0}`);
         })
         .catch(error => {
-            console.error('Error:', error);
+            // If this is an AbortError, we can ignore it
+            if (error.name === 'AbortError') {
+                console.log('🛑 Request was aborted - likely replaced by a newer request');
+                return;
+            }
+            
+            // Clear the current request reference
+            window.currentRequest = null;
+            
+            console.error('❌ Error loading transactions:', error);
             loadingAnimation.style.display = 'none';
-            tableContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: #dc3545;">Error loading transactions. Please try again.</div>';
+            tableContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                    <p>Error loading transactions</p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</p>
+                    <details style="margin-top: 1rem; text-align: left; max-width: 600px; margin: 1rem auto; padding: 1rem; background: #f8f8f8; border-radius: 4px;">
+                        <summary style="cursor: pointer; font-weight: bold;">Debug Info</summary>
+                        <p><strong>Error Type:</strong> ${error.name}</p>
+                        <p><strong>API URL:</strong> ${url}</p>
+                        <p><strong>Applied Filters:</strong></p>
+                        <pre style="overflow-x: auto; padding: 0.5rem; background: #f0f0f0; font-size: 12px;">${JSON.stringify(currentFilters, null, 2)}</pre>
+                        <p><strong>Browser Info:</strong> ${navigator.userAgent}</p>
+                    </details>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
             tableContainer.style.opacity = '1';
         });
 }
 
 function generateTableHTML(data) {
-    console.log("🔍 Checking transaction data before rendering:", data); // ✅ Debug Full Data
+    console.log("🔍 Checking transaction data before rendering:", data); // Debug Full Data
+    
+    // Safety check for data structure
+    if (!data || !data.data || !Array.isArray(data.data)) {
+        console.error("❌ Invalid data structure received:", data);
+        return `
+            <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                <p>Error: Invalid data format received from server.</p>
+                <details style="margin-top: 1rem; text-align: left; max-width: 600px; margin: 1rem auto; padding: 1rem; background: #f8f8f8; border-radius: 4px;">
+                    <summary style="cursor: pointer; font-weight: bold;">Debug Info</summary>
+                    <pre style="overflow-x: auto; padding: 1rem; background: #f0f0f0; font-size: 12px;">Data Type: ${typeof data}\nStructure: ${JSON.stringify(data, null, 2)}\nFilters: ${JSON.stringify(currentFilters, null, 2)}</pre>
+                </details>
+                <div style="margin-top: 1rem;">
+                    <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Check if the data is empty
+    if (data.data.length === 0) {
+        return `
+            <div style="text-align: center; padding: 2rem; color: #666;">
+                <p>No transactions found for the selected filters.</p>
+                <div style="margin-top: 1rem; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="loadTransactions()" class="retry-btn" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                        Refresh
+                    </button>
+                    <button onclick="showAddTransactionPopup()" class="add-btn" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Add Transaction
+                    </button>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: #f8f8f8; border-radius: 4px; display: inline-block; text-align: left;">
+                    <p><strong>Current Filters:</strong></p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">
+                        <li>Type: ${currentFilters.type === 'all' ? 'All Types' : currentFilters.type.charAt(0).toUpperCase() + currentFilters.type.slice(1)}</li>
+                        <li>Time Period: ${currentFilters.time.charAt(0).toUpperCase() + currentFilters.time.slice(1)}</li>
+                        <li>Sort: ${currentFilters.sort === 'date' ? 'Date' : 'Amount'} (${currentFilters.order === 'asc' ? 'Ascending' : 'Descending'})</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-style: italic;">Try changing your filters or adding new transactions.</p>
+                </div>
+            </div>
+        `;
+    }
 
+    // If we have valid data, generate the table
     return `
         <table>
             <thead class="head-table">
@@ -230,24 +364,56 @@ function generateTableHTML(data) {
             </thead>
             <tbody>
                 ${data.data.map((transaction, index) => {
-                    console.log(`🆔 Row ${index + 1} - transaction:`, transaction); // ✅ Debug ข้อมูล transaction เต็มๆ
-                    let transactionId = transaction.transaction_id ?? `row-${index}`;
-                    console.log(`✅ Set data-id for row ${index + 1}:`, transactionId); // ✅ Debug ค่า data-id
-
-                    return `
-                    <tr style="animation-delay: ${index * 0.05}s">
-                        <td><input type="checkbox" class="row-checkbox" data-id="${transactionId}"></td>
-                        <td data-category="${transaction.category}">${transaction.description}</td>
-                        <td>${new Date(transaction.transaction_date).toLocaleDateString()}</td>
-                        <td>$${parseFloat(transaction.amount).toFixed(2)}</td>
-                        <td data-type="${transaction.type}">${transaction.type === 'expense' ? 'Exp.' : 'Inc.'}</td>
-                        <td>${transaction.category}</td>
-                        <td>
-                            <svg width="24" height="24" viewBox="0 0 24 24">
-                                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"></path>
-                            </svg>
-                        </td>
-                    </tr>`;
+                    try {
+                        console.log(`🆔 Row ${index + 1} - transaction:`, transaction); // Debug transaction data
+                        
+                        // Safely get the transaction ID with fallback
+                        let transactionId = transaction?.transaction_id || `row-${index}`;
+                        console.log(`✅ Set data-id for row ${index + 1}:`, transactionId);
+                        
+                        // Safely handle transaction properties with fallbacks
+                        const description = transaction?.description || 'Unknown';
+                        const category = transaction?.category || 'Uncategorized';
+                        let dateDisplay = 'N/A';
+                        
+                        try {
+                            if (transaction?.transaction_date) {
+                                dateDisplay = new Date(transaction.transaction_date).toLocaleDateString();
+                            }
+                        } catch (dateError) {
+                            console.error("Error formatting date:", dateError);
+                        }
+                        
+                        let amountDisplay = '0.00';
+                        try {
+                            if (transaction?.amount) {
+                                amountDisplay = parseFloat(transaction.amount).toFixed(2);
+                            }
+                        } catch (amountError) {
+                            console.error("Error formatting amount:", amountError);
+                        }
+                        
+                        const type = transaction?.type || 'unknown';
+                        const typeDisplay = type === 'expense' ? 'Exp.' : (type === 'income' ? 'Inc.' : type);
+                        
+                        return `
+                        <tr style="animation-delay: ${index * 0.05}s">
+                            <td><input type="checkbox" class="row-checkbox" data-id="${transactionId}"></td>
+                            <td data-category="${category}">${description}</td>
+                            <td>${dateDisplay}</td>
+                            <td>$${amountDisplay}</td>
+                            <td data-type="${type}">${typeDisplay}</td>
+                            <td>${category}</td>
+                            <td>
+                                <svg width="24" height="24" viewBox="0 0 24 24">
+                                    <path d="M6 4H18V20L12 14L6 20V4Z" stroke="#A0A0A0" stroke-width="2" fill="none"></path>
+                                </svg>
+                            </td>
+                        </tr>`;
+                    } catch (rowError) {
+                        console.error(`Error generating row ${index}:`, rowError);
+                        return `<tr><td colspan="7" style="color: #dc3545;">Error generating row data</td></tr>`;
+                    }
                 }).join('')}
             </tbody>
         </table>
@@ -276,8 +442,35 @@ function generatePaginationHTML(data) {
 
 function changePage(page) {
     if (page < 1) return;
+    
+    // Get pagination buttons for updating UI
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    
+    // Temporarily disable buttons during page transition
+    if (prevPageBtn) prevPageBtn.disabled = true;
+    if (nextPageBtn) nextPageBtn.disabled = true;
+    
+    // Add visual feedback for the buttons
+    if (page < currentPage) {
+        if (prevPageBtn) prevPageBtn.style.opacity = '0.7'; // Visual feedback for clicked button
+    } else if (page > currentPage) {
+        if (nextPageBtn) nextPageBtn.style.opacity = '0.7'; // Visual feedback for clicked button
+    }
+    
     currentPage = page;
+    
+    // Update current page indicator
+    const currentPageNum = document.getElementById('currentPageNum');
+    if (currentPageNum) currentPageNum.textContent = page;
+    
     loadTransactions();
+    
+    // Reset button opacity after a short delay
+    setTimeout(() => {
+        if (prevPageBtn) prevPageBtn.style.opacity = '';
+        if (nextPageBtn) nextPageBtn.style.opacity = '';
+    }, 300);
 }
 
 function attachCheckboxListeners() {
@@ -306,8 +499,222 @@ document.addEventListener('click', function(event) {
 document.addEventListener('DOMContentLoaded', function() {
     loadTransactions();
     updateSelectedStates();
-    initializeEventListeners();
+    
+    // Safely call initializeEventListeners if it exists
+    if (typeof initializeEventListeners === 'function') {
+        initializeEventListeners();
+    } else {
+        console.warn('⚠️ initializeEventListeners is not defined. Make sure script.js is loaded properly.');
+        // Fallback for basic functionality
+        document.querySelectorAll('.action-buttons button').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.classList.contains('edit-btn')) {
+                    editSelected();
+                } else if (this.classList.contains('bookmark-btn')) {
+                    bookmarkSelected();
+                } else if (this.classList.contains('remove-btn')) {
+                    removeSelected();
+                }
+            });
+        });
+    }
 });
+
+// Function to update pagination controls based on response data
+function updatePaginationControls(data) {
+    console.log("📄 Updating pagination controls:", {
+        currentPage: data.current_page,
+        lastPage: data.last_page,
+        total: data.total,
+        perPage: data.per_page
+    });
+
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const currentPageNum = document.getElementById('currentPageNum');
+    
+    if (!prevPageBtn || !nextPageBtn || !pageIndicator || !currentPageNum) {
+        console.error("❌ Pagination controls not found in DOM");
+        return;
+    }
+    
+    // Update the current page indicator
+    currentPageNum.textContent = data.current_page || 1;
+    
+    // Always show page indicator with forced "more pages" messaging
+    // This is a temporary override to test if there are indeed more pages
+    pageIndicator.style.display = 'inline';
+    
+    // Override the pagination text to indicate we're forcing pagination
+    if (data.total == 0) {
+        pageIndicator.innerHTML = `Page <span id="currentPageNum">${data.current_page}</span> (Testing pagination)`;
+    } else {
+        pageIndicator.innerHTML = `Page <span id="currentPageNum">${data.current_page}</span> of ${Math.max(data.last_page, 2)} (${data.total} total)`;
+    }
+    
+    // Add special styling for buttons when at limits
+    if (data.current_page <= 1) {
+        prevPageBtn.disabled = true;
+        prevPageBtn.classList.add('disabled');
+    } else {
+        prevPageBtn.disabled = false;
+        prevPageBtn.classList.remove('disabled');
+    }
+    
+    // ALWAYS enable the next button regardless of data.last_page
+    // This is a temporary override to test if there are more pages
+    nextPageBtn.disabled = false;
+    nextPageBtn.classList.remove('disabled');
+    
+    console.log(`✅ Pagination updated - Prev: ${!prevPageBtn.disabled}, Next: ${!nextPageBtn.disabled}`);
+}
+
+// Function to toggle all checkboxes in the transaction table
+function toggleAllCheckboxes() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    
+    if (!selectAllCheckbox) {
+        console.error("❌ Select all checkbox not found");
+        return;
+    }
+    
+    console.log(`🔄 Toggling all checkboxes to: ${selectAllCheckbox.checked}`);
+    
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateActionBar();
+}
+
+// Function to update the action bar based on selected items
+function updateActionBar() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    const actionBar = document.getElementById('action-bar');
+    const selectedCount = document.getElementById('selected-count');
+    const editBtn = document.querySelector('.action-buttons .edit-btn');
+    
+    if (!actionBar || !selectedCount) {
+        console.warn("⚠️ Action bar elements not found");
+        return;
+    }
+    
+    const count = selectedCheckboxes.length;
+    console.log(`✅ Selected count: ${count}`);
+    
+    if (count > 0) {
+        actionBar.classList.remove('hidden');
+        selectedCount.textContent = `${count} Item${count > 1 ? 's' : ''}`;
+        
+        // Enable/disable edit button based on selection count
+        if (editBtn) {
+            editBtn.disabled = count !== 1;
+        }
+    } else {
+        actionBar.classList.add('hidden');
+    }
+}
+
+// Function to edit selected transaction
+function editSelected() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    
+    if (selectedCheckboxes.length !== 1) {
+        console.warn("⚠️ Edit requires exactly one selected transaction");
+        return;
+    }
+    
+    const transactionId = selectedCheckboxes[0].getAttribute('data-id');
+    console.log(`🔄 Editing transaction: ${transactionId}`);
+    
+    window.location.href = "{{ url('/transaction') }}/" + transactionId + "/edit";
+}
+
+// Function to bookmark selected transactions
+function bookmarkSelected() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        console.warn("⚠️ No transactions selected for bookmarking");
+        return;
+    }
+    
+    const ids = Array.from(selectedCheckboxes).map(checkbox => 
+        checkbox.getAttribute('data-id')
+    );
+    
+    console.log(`🔖 Bookmarking ${ids.length} transactions: `, ids);
+    
+    // Call the bookmark API endpoint
+    fetch('/api/transactions/bookmark-multiple', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Bookmark response:', data);
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error bookmarking transactions:', error);
+        alert('Failed to bookmark transactions');
+    });
+}
+
+// Function to remove selected transactions
+function removeSelected() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        console.warn("⚠️ No transactions selected for removal");
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} transaction(s)?`)) {
+        return;
+    }
+    
+    const ids = Array.from(selectedCheckboxes).map(checkbox => 
+        checkbox.getAttribute('data-id')
+    );
+    
+    console.log(`🗑️ Removing ${ids.length} transactions: `, ids);
+    
+    // Call the delete API endpoint
+    fetch('/api/transactions/delete-multiple', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Delete response:', data);
+        if (data.success) {
+            alert(data.message);
+            // Reload transactions to update the table
+            loadTransactions();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting transactions:', error);
+        alert('Failed to delete transactions');
+    });
+}
 </script>
 @endpush
 
