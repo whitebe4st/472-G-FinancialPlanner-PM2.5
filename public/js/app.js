@@ -181,9 +181,18 @@ function initializeTransactionPage() {
     
     if (nextPageBtn) {
         nextPageBtn.addEventListener('click', function() {
-            window.currentPage++;
-            currentFilters.page = window.currentPage;
-            loadTransactions(currentFilters);
+            // Only navigate if there's a next page to go to
+            const lastKnownPageData = window.lastKnownPageData || { last_page: 1 };
+            if (window.currentPage < lastKnownPageData.last_page) {
+                window.currentPage++;
+                currentFilters.page = window.currentPage;
+                loadTransactions(currentFilters);
+            } else {
+                console.log(`⛔ Already on last page (${window.currentPage}), can't go to next page`);
+                // Ensure button is visually disabled
+                nextPageBtn.disabled = true;
+                nextPageBtn.classList.add('disabled');
+            }
         });
     }
 }

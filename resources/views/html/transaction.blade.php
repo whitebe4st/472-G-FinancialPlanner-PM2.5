@@ -72,13 +72,15 @@
         </div>
 
         <!-- Pagination Container -->
-        <div class="pagination-container" style="display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px;">
-            <button id="prevPageBtn" class="pagination-btn" onclick="changePage(currentPage - 1)" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&lt;</button>
-            <div class="addBar-btn">
-                <button onclick="showAddTransactionPopup()">+</button>
+        <div class="pagination-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 20px; gap: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="prevPageBtn" class="pagination-btn" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&lt;</button>
+                <div class="addBar-btn">
+                    <button onclick="showAddTransactionPopup()">+</button>
+                </div>
+                <button id="nextPageBtn" class="pagination-btn" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&gt;</button>
             </div>
-            <button id="nextPageBtn" class="pagination-btn" onclick="changePage(currentPage + 1)" style="width: 36px; height: 36px; background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 50%; color: #555; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">&gt;</button>
-            <span id="pageIndicator" class="page-indicator" style="font-size: 14px; color: #666; margin-left: 10px; font-weight: 500;">Page <span id="currentPageNum">1</span></span>
+            <span id="pageIndicator" class="page-indicator" style="font-size: 14px; color: #666; margin-top: 5px;">Page <span id="currentPageNum">1</span></span>
         </div>
 
         <div id="action-bar" class="action-bar hidden">
@@ -444,7 +446,14 @@ function generatePaginationHTML(data) {
 }
 
 function changePage(page) {
-    if (page < 1) return;
+    // Check if the requested page exists based on last known pagination data
+    const lastKnownPageData = window.lastKnownPageData || { last_page: 1 };
+    
+    // Don't allow navigating to pages that don't exist
+    if (page < 1 || (lastKnownPageData.last_page && page > lastKnownPageData.last_page)) {
+        console.log(`⛔ Attempted to navigate to invalid page ${page}. Last page is ${lastKnownPageData.last_page}`);
+        return;
+    }
     
     // Get pagination buttons for updating UI
     const prevPageBtn = document.getElementById('prevPageBtn');
@@ -553,15 +562,26 @@ function updatePaginationControls(data) {
     
     // Get the actual values from the response
     const currentPage = data.current_page || 1;
-    const lastPage = data.last_page || 1;
+    const lastPage = Math.max(data.last_page || 1, 1); // Ensure lastPage is at least 1
     const total = data.total || 0;
     const hasNextPage = currentPage < lastPage;
+    
+    // Save the pagination data for future reference
+    window.lastKnownPageData = {
+        total: total,
+        current_page: currentPage,
+        last_page: lastPage,
+        per_page: data.per_page || 10
+    };
     
     // Update the current page indicator
     currentPageNum.textContent = currentPage;
     
     // Show the page indicator with accurate information
     pageIndicator.style.display = 'inline';
+    pageIndicator.style.textAlign = 'center';
+    pageIndicator.style.marginTop = '5px';
+    pageIndicator.style.fontWeight = '500';
     pageIndicator.innerHTML = `Page <span id="currentPageNum">${currentPage}</span> of ${lastPage} (${total} total)`;
     
     // Set button state based on current page position
@@ -583,6 +603,10 @@ function updatePaginationControls(data) {
     }
     
     console.log(`✅ Pagination updated - Current page: ${currentPage}, Last page: ${lastPage}, Has next page: ${hasNextPage}`);
+    
+    // Fix the direct onclick handlers on the pagination buttons
+    prevPageBtn.setAttribute('onclick', `changePage(${Math.max(1, currentPage - 1)})`);
+    nextPageBtn.setAttribute('onclick', `changePage(${hasNextPage ? currentPage + 1 : currentPage})`);
 }
 
 // Function to toggle all checkboxes in the transaction table
