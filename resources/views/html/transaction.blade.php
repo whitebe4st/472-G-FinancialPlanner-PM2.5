@@ -918,7 +918,7 @@ function editSelected() {
     const transactionId = selectedCheckboxes[0].getAttribute('data-id');
     console.log(`🔄 Editing transaction: ${transactionId}`);
     
-    window.location.href = "{{ url('/transaction') }}/" + transactionId + "/edit";
+    window.location.href = `/transactions/${transactionId}/edit`;
 }
 
 // Function to bookmark selected transactions
@@ -937,7 +937,7 @@ function bookmarkSelected() {
     console.log(`🔖 Bookmarking ${ids.length} transactions: `, ids);
     
     // Call the bookmark API endpoint
-    fetch('/api/transactions/bookmark-multiple', {
+    fetch('/transactions/bookmark-multiple', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -980,8 +980,8 @@ function removeSelected() {
     console.log(`🗑️ Removing ${ids.length} transactions: `, ids);
     
     // Call the delete API endpoint
-    fetch('/api/transactions/delete-multiple', {
-        method: 'POST',
+    fetch('/transactions', {
+        method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -1066,6 +1066,151 @@ function checkAndReinitialize() {
     if (hasCheckedItems !== actionBarVisible) {
         console.log("⚠️ Action bar state doesn't match checkbox state, updating...");
         updateActionBar();
+    }
+}
+
+// Set up action bar button handlers
+function setupActionBarButtons() {
+    const actionBar = document.getElementById('action-bar');
+    if (!actionBar) return;
+    
+    // Edit button
+    const editBtn = actionBar.querySelector('.edit-btn');
+    if (editBtn) {
+        // Remove existing listeners
+        const newEditBtn = editBtn.cloneNode(true);
+        editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+        
+        newEditBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Edit button clicked via fix script");
+            
+            // Get the selected checkbox ID
+            const selectedCheckbox = document.querySelector('.row-checkbox:checked');
+            if (selectedCheckbox) {
+                const id = selectedCheckbox.getAttribute('data-id');
+                console.log("Editing transaction with ID:", id);
+                
+                // Call the existing editSelected function if available
+                if (typeof window.editSelected === 'function') {
+                    window.editSelected();
+                } else {
+                    // Fallback direct implementation
+                    const baseUrl = "{{ url('/transaction') }}";
+                    window.location.href = baseUrl + "/" + id + "/edit";
+                }
+            }
+        });
+    }
+    
+    // Bookmark button
+    const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
+    if (bookmarkBtn) {
+        // Remove existing listeners
+        const newBookmarkBtn = bookmarkBtn.cloneNode(true);
+        bookmarkBtn.parentNode.replaceChild(newBookmarkBtn, bookmarkBtn);
+        
+        newBookmarkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Bookmark button clicked via fix script");
+            
+            // Get all selected checkbox IDs
+            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert("Please select at least one transaction to bookmark");
+                return;
+            }
+            
+            const ids = Array.from(selectedCheckboxes).map(checkbox => checkbox.getAttribute('data-id'));
+            console.log("Bookmarking transactions:", ids);
+            
+            // Call the existing bookmarkSelected function if available
+            if (typeof window.bookmarkSelected === 'function') {
+                window.bookmarkSelected();
+            } else {
+                // Fallback direct implementation
+                fetch('/transactions/bookmark-multiple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ ids: ids })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || "Transactions bookmarked successfully");
+                    } else {
+                        alert("Error: " + (data.message || "Failed to bookmark transactions"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Error bookmarking transactions:", error);
+                    alert("Failed to bookmark transactions. Please try again.");
+                });
+            }
+        });
+    }
+    
+    // Remove button
+    const removeBtn = actionBar.querySelector('.remove-btn');
+    if (removeBtn) {
+        // Remove existing listeners
+        const newRemoveBtn = removeBtn.cloneNode(true);
+        removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+        
+        newRemoveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Remove button clicked via fix script");
+            
+            // Get all selected checkbox IDs
+            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert("Please select at least one transaction to remove");
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} transaction(s)?`)) {
+                return;
+            }
+            
+            const ids = Array.from(selectedCheckboxes).map(checkbox => checkbox.getAttribute('data-id'));
+            console.log("Removing transactions:", ids);
+            
+            // Call the existing removeSelected function if available
+            if (typeof window.removeSelected === 'function') {
+                window.removeSelected();
+            } else {
+                // Fallback direct implementation
+                fetch('/transactions', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ ids: ids })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || "Transactions deleted successfully");
+                        // Reload transactions to update the table
+                        if (typeof window.loadTransactions === 'function') {
+                            window.loadTransactions();
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        alert("Error: " + (data.message || "Failed to delete transactions"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Error deleting transactions:", error);
+                    alert("Failed to delete transactions. Please try again.");
+                });
+            }
+        });
     }
 }
 </script>
@@ -1325,13 +1470,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Directly fix the debug button
     const debugBtn = document.getElementById('debugActionBarBtn');
     if (debugBtn) {
-        debugBtn.onclick = function() {
+        debugBtn.addEventListener('click', function() {
             forceShowActionBar();
-        };
+            return false;
+        });
     }
     
-    // Also fix the global click event for action buttons
-    setupActionBarButtons();
+    // Fix the action bar buttons
+    fixActionButtons();
 });
 
 // Function to force show the action bar (for debugging)
@@ -1402,6 +1548,11 @@ function attachCheckboxHandlers() {
             console.log("Checkbox changed:", this.checked);
             updateActionBarVisibility();
         });
+        
+        // Also ensure original handler gets called if it exists
+        if (window.updateActionBar && typeof window.updateActionBar === 'function') {
+            checkbox.addEventListener('change', window.updateActionBar);
+        }
     });
     
     // Handle select all checkbox
@@ -1409,7 +1560,13 @@ function attachCheckboxHandlers() {
     if (selectAll && !selectAll.hasAttribute('data-handler-attached')) {
         selectAll.setAttribute('data-handler-attached', 'true');
         
-        selectAll.addEventListener('change', function() {
+        // Replace with a clone to remove any existing handlers
+        const newSelectAll = selectAll.cloneNode(false);
+        if (selectAll.parentNode) {
+            selectAll.parentNode.replaceChild(newSelectAll, selectAll);
+        }
+        
+        newSelectAll.addEventListener('change', function() {
             const isChecked = this.checked;
             console.log("Select all changed:", isChecked);
             
@@ -1420,6 +1577,11 @@ function attachCheckboxHandlers() {
             
             // Update action bar
             updateActionBarVisibility();
+            
+            // Also call original handler if it exists
+            if (window.updateActionBar && typeof window.updateActionBar === 'function') {
+                window.updateActionBar();
+            }
         });
     }
     
@@ -1453,62 +1615,144 @@ function makeRowsClickable() {
                 checkbox.checked = !checkbox.checked;
                 console.log("Row clicked, toggled checkbox to:", checkbox.checked);
                 
-                // Update action bar
-                updateActionBarVisibility();
+                // Create and dispatch a change event
+                const event = new Event('change', { bubbles: true });
+                checkbox.dispatchEvent(event);
             }
         });
     });
 }
 
-// Set up action bar button handlers
-function setupActionBarButtons() {
+// Fix action bar buttons by ensuring they call the correct functions
+function fixActionButtons() {
     const actionBar = document.getElementById('action-bar');
     if (!actionBar) return;
     
-    // Edit button
-    const editBtn = actionBar.querySelector('.edit-btn');
-    if (editBtn) {
-        editBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const selectedCheckbox = document.querySelector('.row-checkbox:checked');
-            if (selectedCheckbox) {
-                const id = selectedCheckbox.getAttribute('data-id');
-                console.log("Edit clicked for ID:", id);
-                if (typeof editSelected === 'function') {
-                    editSelected();
+    // Replace all buttons with clones to remove any existing listeners
+    const actionButtons = actionBar.querySelector('.action-buttons');
+    if (actionButtons) {
+        const newActionButtons = actionButtons.cloneNode(true);
+        actionButtons.parentNode.replaceChild(newActionButtons, actionButtons);
+        
+        // Set up the edit button
+        const editBtn = newActionButtons.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Edit button clicked");
+                
+                const transactionId = document.querySelector('.row-checkbox:checked')?.getAttribute('data-id');
+                if (transactionId) {
+                    console.log("Editing transaction:", transactionId);
+                    // Use correct URL format for your application
+                    window.location.href = `/transactions/${transactionId}/edit`;
                 } else {
-                    console.log("editSelected function not found");
+                    console.error("No transaction selected");
                 }
-            }
-        });
-    }
-    
-    // Bookmark button
-    const bookmarkBtn = actionBar.querySelector('.bookmark-btn');
-    if (bookmarkBtn) {
-        bookmarkBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log("Bookmark clicked");
-            if (typeof bookmarkSelected === 'function') {
-                bookmarkSelected();
-            } else {
-                console.log("bookmarkSelected function not found");
-            }
-        });
-    }
-    
-    // Remove button
-    const removeBtn = actionBar.querySelector('.remove-btn');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log("Remove clicked");
-            if (typeof removeSelected === 'function') {
-                removeSelected();
-            } else {
-                console.log("removeSelected function not found");
-            }
-        });
+            });
+        }
+        
+        // Set up the bookmark button
+        const bookmarkBtn = newActionButtons.querySelector('.bookmark-btn');
+        if (bookmarkBtn) {
+            bookmarkBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Bookmark button clicked");
+                
+                const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+                    .map(checkbox => checkbox.getAttribute('data-id'));
+                
+                if (selectedIds.length === 0) {
+                    alert("Please select at least one transaction to bookmark");
+                    return;
+                }
+                
+                console.log("Bookmarking transactions:", selectedIds);
+                
+                // Call the existing bookmarkSelected function if available
+                if (typeof window.bookmarkSelected === 'function') {
+                    window.bookmarkSelected();
+                } else {
+                    // Fallback direct implementation
+                    fetch('/transactions/bookmark-multiple', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ ids: selectedIds })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || "Transactions bookmarked successfully");
+                        } else {
+                            alert("Error: " + (data.message || "Failed to bookmark transactions"));
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error bookmarking transactions:", error);
+                        alert("Failed to bookmark transactions. Please try again.");
+                    });
+                }
+            });
+        }
+        
+        // Set up the remove button
+        const removeBtn = newActionButtons.querySelector('.remove-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("Remove button clicked");
+                
+                const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+                    .map(checkbox => checkbox.getAttribute('data-id'));
+                
+                if (selectedIds.length === 0) {
+                    alert("Please select at least one transaction to remove");
+                    return;
+                }
+                
+                if (!confirm(`Are you sure you want to delete ${selectedIds.length} transaction(s)?`)) {
+                    return;
+                }
+                
+                console.log("Removing transactions:", selectedIds);
+                
+                // Call the existing removeSelected function if available
+                if (typeof window.removeSelected === 'function') {
+                    window.removeSelected();
+                } else {
+                    // Fallback direct implementation
+                    fetch('/transactions', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ ids: selectedIds })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || "Transactions deleted successfully");
+                            // Reload transactions to update the table
+                            if (typeof window.loadTransactions === 'function') {
+                                window.loadTransactions();
+                            } else {
+                                window.location.reload();
+                            }
+                        } else {
+                            alert("Error: " + (data.message || "Failed to delete transactions"));
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error deleting transactions:", error);
+                        alert("Failed to delete transactions. Please try again.");
+                    });
+                }
+            });
+        }
     }
 }
 </script>
