@@ -765,15 +765,6 @@ function removeSelected() {
         <h2>Add Transaction</h2>
         <button onclick="hideAddTransactionPopup()">&times;</button>
     </div>
-    
-    <div class="form-actions">
-        <button type="button" class="btn-bookmark" onclick="showBookmarkSelectionModal()">
-            <svg width="20" height="20" viewBox="0 0 24 24">
-                <path d="M6 4H18V20L12 14L6 20V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            Add from Bookmark
-        </button>
-    </div>
 
     <form id="transactionForm">
         @csrf
@@ -813,10 +804,24 @@ function removeSelected() {
             <label for="transaction_date">Date</label>
             <input type="date" id="transaction_date" name="transaction_date" required>
         </div>
-        <div class="button-group">
-            <button type="button" onclick="hideAddTransactionPopup()">Cancel</button>
-            <button type="submit">Add</button>
+        <div class="button-group" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" onclick="hideAddTransactionPopup()" style="padding: 8px 15px; border: none; background-color: #dc3545; color: white; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">Cancel</button>
+            <button type="button" class="btn-bookmark" onclick="showBookmarkSelectionModal()" style="background-color: #71D881; color: white; border: none; padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.3s ease;">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M6 4H18V20L12 14L6 20V4Z" stroke="white" stroke-width="2" fill="none"/>
+                </svg>
+                Add from Bookmark
+            </button>
+            <button type="submit" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">Add</button>
         </div>
+        
+        <style>
+            .button-group button:hover {
+                opacity: 0.85;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+        </style>
     </form>
 </div>
 @endsection
@@ -878,5 +883,87 @@ function removeSelected() {
             <button type="submit">Save</button>
         </div>
     </form>
+</div>
+@endsection
+
+@section('bookmarkSelectionModal')
+<div class="popup-content">
+    <div class="popup-header">
+        <h2>Select from Bookmarks</h2>
+        <button onclick="hideBookmarkSelectionModal()">&times;</button>
+    </div>
+
+    <div class="bookmark-table" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; border-radius: 10px; border: 1px solid #eee;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background-color: #ffffff; z-index: 10;">
+                <tr>
+                    <th style="padding: 12px; text-align: center; width: 5%;">
+                        <input type="checkbox" id="selectAllBookmarks" onclick="toggleAllBookmarks()">
+                    </th>
+                    <th style="padding: 12px; text-align: left; width: 30%;">Transaction</th>
+                    <th style="padding: 12px; text-align: left; width: 20%;">Amount</th>
+                    <th style="padding: 12px; text-align: left; width: 15%;">Type</th>
+                    <th style="padding: 12px; text-align: left; width: 30%;">Category</th>
+                </tr>
+            </thead>
+            <tbody id="bookmarkTableBody" style="max-height: 350px;">
+                <!-- Will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="bookmarkLoadingIndicator" style="display: none; text-align: center; padding: 20px;">
+        <div class="spinner" style="display: inline-block;">
+            <svg width="40" height="40" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="20" fill="none" stroke="#333" stroke-width="4" stroke-dasharray="60 20">
+                    <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 25 25"
+                        to="360 25 25"
+                        dur="1s"
+                        repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        </div>
+        <p style="margin-top: 10px; color: #666;">Loading bookmarks...</p>
+    </div>
+
+    <div id="noBookmarksMessage" style="display: none; text-align: center; padding: 20px; color: #666;">
+        <p>No bookmarks found. Create some bookmarks first!</p>
+    </div>
+
+    <div class="button-group" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" onclick="hideBookmarkSelectionModal()" style="padding: 8px 15px; border: none; background-color: #dc3545; color: white; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">Cancel</button>
+        <button type="button" onclick="addSelectedBookmarks()" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;">Add Selected</button>
+    </div>
+    
+    <style>
+        .button-group button:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        #bookmarkTableBody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        #bookmarkTableBody tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        #bookmarkTableBody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Style for checkboxes */
+        #bookmarkTableBody input[type="checkbox"], #selectAllBookmarks {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
 </div>
 @endsection

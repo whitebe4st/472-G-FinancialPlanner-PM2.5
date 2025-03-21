@@ -208,13 +208,18 @@ function hideBookmarkSelectionModal() {
 
 function loadBookmarkedTransactions() {
     const tbody = document.getElementById("bookmarkTableBody");
-    if (!tbody) {
-        console.error("Bookmark table body not found");
+    const loadingIndicator = document.getElementById("bookmarkLoadingIndicator");
+    const noBookmarksMessage = document.getElementById("noBookmarksMessage");
+    
+    if (!tbody || !loadingIndicator || !noBookmarksMessage) {
+        console.error("Bookmark elements not found");
         return;
     }
 
-    tbody.innerHTML =
-        '<tr><td colspan="5" class="loading">Loading bookmarks...</td></tr>';
+    // Show loading indicator
+    tbody.innerHTML = '';
+    loadingIndicator.style.display = "block";
+    noBookmarksMessage.style.display = "none";
 
     fetch("/api/bookmarks")
         .then((response) => {
@@ -224,9 +229,11 @@ function loadBookmarkedTransactions() {
             return response.json();
         })
         .then((bookmarks) => {
+            // Hide loading indicator
+            loadingIndicator.style.display = "none";
+            
             if (bookmarks.length === 0) {
-                tbody.innerHTML =
-                    '<tr><td colspan="5" class="text-center">No bookmarks found</td></tr>';
+                noBookmarksMessage.style.display = "block";
                 return;
             }
 
@@ -234,7 +241,7 @@ function loadBookmarkedTransactions() {
                 .map(
                     (bookmark) => `
                 <tr>
-                    <td><input type="checkbox" class="bookmark-checkbox" value="${
+                    <td style="text-align: center;"><input type="checkbox" class="bookmark-checkbox" value="${
                         bookmark.bookmark_id
                     }"></td>
                     <td>${bookmark.description}</td>
@@ -254,8 +261,8 @@ function loadBookmarkedTransactions() {
         })
         .catch((error) => {
             console.error("Error loading bookmarks:", error);
-            tbody.innerHTML =
-                '<tr><td colspan="5" class="error">Failed to load bookmarks</td></tr>';
+            loadingIndicator.style.display = "none";
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545; padding: 20px;">Failed to load bookmarks</td></tr>';
         });
 }
 
