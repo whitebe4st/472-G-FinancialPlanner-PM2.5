@@ -123,6 +123,23 @@
         visibility: hidden;
         transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0.3s;
     }
+    
+    /* Loading spinner for buttons */
+    .spinner-mini {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 
 @push('scripts')
@@ -596,6 +613,14 @@ document.addEventListener('click', function(event) {
 // Initial states
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 DOM Content Loaded - Initializing Transaction Page");
+    
+    // Register our functions globally
+    window.editTransaction = editTransaction;
+    window.editSelected = editSelected;
+    window.showEditTransactionPopup = showEditTransactionPopup;
+    window.hideEditTransactionPopup = hideEditTransactionPopup;
+    window.initializeEditFormListener = initializeEditFormListener;
+    
     console.log("Action Bar Element: ", document.getElementById('action-bar'));
     
     loadTransactions();
@@ -603,53 +628,58 @@ document.addEventListener('DOMContentLoaded', function() {
     makeRowsClickableForCheckboxes();
     
     // Debug button for action bar
-    document.getElementById('debugActionBarBtn').addEventListener('click', function() {
-        console.log("🔧 Debug button clicked - toggling action bar visibility");
-        const actionBar = document.getElementById('action-bar');
-        
-        if (!actionBar) {
-            console.error("❌ Action bar element not found");
-            return;
-        }
-        
-        console.log("Current action bar state:", {
-            display: actionBar.style.display,
-            hasClass: actionBar.classList.contains('hidden')
+    const debugBtn = document.getElementById('debugActionBarBtn');
+    if (debugBtn) {
+        debugBtn.addEventListener('click', function() {
+            console.log("🔧 Debug button clicked - toggling action bar visibility");
+            const actionBar = document.getElementById('action-bar');
+            
+            if (!actionBar) {
+                console.error("❌ Action bar element not found");
+                return;
+            }
+            
+            // Toggle the action bar class
+            if (actionBar.classList.contains('hidden')) {
+                // Show action bar
+                actionBar.classList.remove('hidden');
+                actionBar.style.display = "flex";
+                actionBar.style.opacity = "1";
+                actionBar.style.transform = "translateX(-50%)";
+                actionBar.style.pointerEvents = "auto";
+            } else {
+                // Hide action bar
+                actionBar.classList.add('hidden');
+                actionBar.style.opacity = "0";
+                actionBar.style.transform = "translate(-50%, 100px)";
+                actionBar.style.pointerEvents = "none";
+            }
+            
+            // Update the text
+            document.getElementById('selected-count').textContent = "Debug Mode";
         });
-        
-        // Toggle the action bar class
-        if (actionBar.classList.contains('hidden')) {
-            // Show action bar
-            actionBar.classList.remove('hidden');
-            actionBar.style.display = "flex";
-            actionBar.style.opacity = "1";
-            actionBar.style.transform = "translateX(-50%)";
-            actionBar.style.pointerEvents = "auto";
-        } else {
-            // Hide action bar
-            actionBar.classList.add('hidden');
-            actionBar.style.opacity = "0";
-            actionBar.style.transform = "translate(-50%, 100px)";
-            actionBar.style.pointerEvents = "none";
-        }
-        
-        // Update the text
-        document.getElementById('selected-count').textContent = "Debug Mode";
-        
-        console.log("✅ Action bar should now be toggled");
-    });
+    }
     
     // Add event listeners for action buttons
-    document.querySelector('.action-buttons').addEventListener('click', function(e) {
-        // Event delegation for the action buttons
-        if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
-            editSelected();
-        } else if (e.target.classList.contains('bookmark-btn') || e.target.closest('.bookmark-btn')) {
-            bookmarkSelected();
-        } else if (e.target.classList.contains('remove-btn') || e.target.closest('.remove-btn')) {
-            removeSelected();
-        }
-    });
+    const actionButtons = document.querySelector('.action-buttons');
+    if (actionButtons) {
+        actionButtons.addEventListener('click', function(e) {
+            // Event delegation for the action buttons
+            if (e.target.classList.contains('edit-btn') || e.target.closest('.edit-btn')) {
+                e.preventDefault();
+                console.log("Edit button clicked via delegation");
+                editSelected();
+            } else if (e.target.classList.contains('bookmark-btn') || e.target.closest('.bookmark-btn')) {
+                e.preventDefault();
+                console.log("Bookmark button clicked via delegation");
+                bookmarkSelected();
+            } else if (e.target.classList.contains('remove-btn') || e.target.closest('.remove-btn')) {
+                e.preventDefault();
+                console.log("Remove button clicked via delegation");
+                removeSelected();
+            }
+        });
+    }
     
     // Add event delegation for checkboxes
     document.addEventListener('change', function(event) {
@@ -659,33 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateActionBar();
         }
     });
-    
-    // Safely call initializeEventListeners if it exists
-    if (typeof initializeEventListeners === 'function') {
-        initializeEventListeners();
-    } else {
-        console.warn('⚠️ initializeEventListeners is not defined. Make sure script.js is loaded properly.');
-    }
-    
-    // Set up a periodic check to ensure event listeners are attached
-    // This helps with dynamic content loading or after AJAX operations
-    setInterval(checkAndReinitialize, 2000);
-    
-    // Force checking for checkboxes periodically for the first few seconds
-    // This helps with content that loads asynchronously
-    let checkCount = 0;
-    const maxChecks = 5;
-    const checkInterval = setInterval(() => {
-        checkCount++;
-        console.log(`🔍 Periodic check for checkboxes (${checkCount}/${maxChecks})`);
-        attachCheckboxListeners();
-        makeRowsClickableForCheckboxes();
-        updateActionBar();
-        
-        if (checkCount >= maxChecks) {
-            clearInterval(checkInterval);
-        }
-    }, 1000);
 });
 
 // Function to update pagination controls based on response data
@@ -912,13 +915,33 @@ function editSelected() {
     
     if (selectedCheckboxes.length !== 1) {
         console.warn("⚠️ Edit requires exactly one selected transaction");
+        alert("Please select exactly one transaction to edit.");
         return;
     }
     
     const transactionId = selectedCheckboxes[0].getAttribute('data-id');
+    if (!transactionId) {
+        console.error("❌ Selected transaction has no ID");
+        alert("Error: Cannot edit transaction with missing ID.");
+        return;
+    }
+    
     console.log(`🔄 Editing transaction: ${transactionId}`);
     
-    window.location.href = `/transactions/${transactionId}/edit`;
+    // Call the editTransaction function from script.js
+    if (typeof editTransaction === 'function') {
+        editTransaction(transactionId);
+    } else {
+        // As a fallback, try the global window.editTransaction
+        if (typeof window.editTransaction === 'function') {
+            window.editTransaction(transactionId);
+        } else {
+            // If all else fails, redirect to the edit page as a last resort
+            console.error("❌ editTransaction function not found - falling back to redirect");
+            alert("Edit functionality is not fully available. Redirecting to edit page.");
+            window.location.href = `/transactions/${transactionId}/edit`;
+        }
+    }
 }
 
 // Function to bookmark selected transactions
@@ -1213,6 +1236,484 @@ function setupActionBarButtons() {
         });
     }
 }
+
+// Function to ensure all global functions are properly registered in the window object
+function initializeGlobalFunctions() {
+    console.log("🔄 Initializing global functions");
+    
+    // Register core functions to window object
+    window.editSelected = editSelected;
+    window.bookmarkSelected = bookmarkSelected;
+    window.updateActionBar = updateActionBar;
+    
+    // Provide a fallback implementation of editTransaction if not already available
+    if (typeof window.editTransaction !== 'function') {
+        window.editTransaction = function(transactionId) {
+            console.log('🔄 Fallback editTransaction called with ID:', transactionId);
+            
+            if (!transactionId) {
+                console.error('❌ Transaction ID is missing!');
+                alert('Invalid transaction ID!');
+                return;
+            }
+            
+            // Fetch transaction data with correct API endpoint
+            fetch(`/transactions/${transactionId}`)
+                .then(response => {
+                    console.log('📡 API Response:', response);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('📦 Transaction data:', data);
+                    if (data.success) {
+                        // Call showEditTransactionPopup with the transaction data
+                        if (typeof window.showEditTransactionPopup === 'function') {
+                            window.showEditTransactionPopup(data.transaction);
+                        } else {
+                            // If showEditTransactionPopup is not available, use our fallback
+                            fallbackShowEditTransactionPopup(data.transaction);
+                        }
+                    } else {
+                        throw new Error(data.message || 'Failed to load transaction');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error:', error);
+                    alert('Error loading transaction data: ' + error.message);
+                });
+        };
+        console.log('✅ Fallback editTransaction function registered');
+    }
+    
+    // Provide a fallback implementation for showEditTransactionPopup
+    if (typeof window.showEditTransactionPopup !== 'function') {
+        window.showEditTransactionPopup = function(transaction) {
+            fallbackShowEditTransactionPopup(transaction);
+        };
+        console.log('✅ Fallback showEditTransactionPopup function registered');
+    }
+    
+    // Provide a fallback implementation for hideEditTransactionPopup
+    if (typeof window.hideEditTransactionPopup !== 'function') {
+        window.hideEditTransactionPopup = function() {
+            console.log("🔄 Fallback hideEditTransactionPopup called");
+            const popup = document.getElementById("editTransactionPopup");
+            if (!popup) {
+                console.error("❌ Edit popup element not found!");
+                return;
+            }
+            
+            popup.classList.remove("active");
+            setTimeout(() => {
+                popup.style.display = "none";
+            }, 300);
+        };
+        console.log('✅ Fallback hideEditTransactionPopup function registered');
+    }
+    
+    console.log("✅ Global functions initialized");
+}
+
+// The actual fallback function
+function fallbackShowEditTransactionPopup(transaction) {
+    console.log("📝 Fallback showing edit popup for transaction:", transaction);
+
+    const popup = document.getElementById("editTransactionPopup");
+    if (!popup) {
+        console.error("❌ Edit popup element not found!");
+        alert("Edit popup not found. Please refresh the page.");
+        return;
+    }
+
+    try {
+        // Fill in the form fields
+        document.getElementById("edit_id").value = transaction.transaction_id;
+        document.getElementById("edit_description").value = transaction.description;
+        document.getElementById("edit_amount").value = transaction.amount;
+        document.getElementById("edit_type").value = transaction.type;
+        document.getElementById("edit_category").value = transaction.category;
+        
+        // Format date properly
+        let transactionDate = transaction.transaction_date;
+        if (transactionDate && transactionDate.includes('T')) {
+            transactionDate = transactionDate.split('T')[0];
+        }
+        document.getElementById("edit_transaction_date").value = transactionDate;
+
+        // Show popup
+        popup.style.display = "flex";
+        setTimeout(() => {
+            popup.classList.add("active");
+        }, 10);
+
+        // Initialize form listener if available
+        if (typeof window.initializeEditFormListener === 'function') {
+            window.initializeEditFormListener();
+        } else {
+            // Simple form submission handler
+            setupBasicEditFormSubmission();
+        }
+
+        console.log("✅ Edit popup should be visible now");
+    } catch (error) {
+        console.error("❌ Error while populating form:", error);
+        alert("Error showing edit form: " + error.message);
+    }
+}
+
+// Basic edit form submission handler
+function setupBasicEditFormSubmission() {
+    const editForm = document.getElementById('editTransactionForm');
+    if (!editForm) {
+        console.error("❌ Edit form not found!");
+        return;
+    }
+
+    // Remove existing listeners
+    const newForm = editForm.cloneNode(true);
+    editForm.parentNode.replaceChild(newForm, editForm);
+
+    newForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log("🔄 Form submitted");
+        
+        const formData = new FormData(this);
+        const transactionId = document.getElementById('edit_id').value;
+        
+        // Convert FormData to JSON
+        const formDataObject = {};
+        formData.forEach((value, key) => {
+            formDataObject[key] = value;
+        });
+        
+        console.log("📦 Sending data:", formDataObject);
+        
+        fetch(`/transactions/${transactionId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formDataObject)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof window.hideEditTransactionPopup === 'function') {
+                    window.hideEditTransactionPopup();
+                } else {
+                    const popup = document.getElementById("editTransactionPopup");
+                    if (popup) {
+                        popup.classList.remove("active");
+                        setTimeout(() => {
+                            popup.style.display = "none";
+                        }, 300);
+                    }
+                }
+                
+                if (typeof window.loadTransactions === 'function') {
+                    window.loadTransactions();
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                throw new Error(data.message || 'Failed to update transaction');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('Error updating transaction: ' + error.message);
+        });
+    });
+}
+
+// Make the edit button call our function properly
+function fixEditButton() {
+    console.log("🔧 Fixing edit button functionality");
+    const actionBar = document.getElementById('action-bar');
+    if (!actionBar) {
+        console.error("❌ Action bar not found");
+        return;
+    }
+    
+    const editBtn = actionBar.querySelector('.edit-btn');
+    if (!editBtn) {
+        console.error("❌ Edit button not found in action bar");
+        return;
+    }
+    
+    // Replace with a fresh button to remove any existing listeners
+    const newEditBtn = editBtn.cloneNode(true);
+    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+    
+    newEditBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("🖱️ Edit button clicked");
+        
+        // Call our editSelected function
+        if (typeof window.editSelected === 'function') {
+            window.editSelected();
+        } else {
+            console.error("❌ editSelected function not found");
+            alert("Error: Edit functionality not available. Please refresh the page.");
+        }
+    });
+    
+    console.log("✅ Edit button fixed");
+}
+
+// Global implementation of editTransaction function
+function editTransaction(transactionId) {
+    console.log('🔄 editTransaction function called with ID:', transactionId);
+    
+    if (!transactionId) {
+        console.error('❌ Transaction ID is missing!');
+        alert('Invalid transaction ID!');
+        return;
+    }
+    
+    // Show loading indicator
+    const actionBar = document.getElementById('action-bar');
+    if (actionBar) {
+        const editBtn = actionBar.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.innerHTML = `<div class="spinner-mini"></div> Loading...`;
+            editBtn.disabled = true;
+        }
+    }
+    
+    // Fetch transaction data with correct API endpoint
+    fetch(`/transactions/${transactionId}`)
+        .then(response => {
+            console.log('📡 API Response Status:', response.status);
+            
+            // Check for specific error status codes
+            if (response.status === 404) {
+                throw new Error('Transaction not found. It may have been deleted.');
+            } else if (response.status === 403) {
+                throw new Error('You do not have permission to edit this transaction.');
+            } else if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Transaction data:', data);
+            
+            // Reset the edit button
+            if (actionBar) {
+                const editBtn = actionBar.querySelector('.edit-btn');
+                if (editBtn) {
+                    editBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                        </svg>
+                        Edit
+                    `;
+                    editBtn.disabled = false;
+                }
+            }
+            
+            if (data.success) {
+                // Show edit popup with the transaction data
+                showEditTransactionPopup(data.transaction);
+            } else {
+                throw new Error(data.message || 'Failed to load transaction data');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error in editTransaction:', error);
+            
+            // Reset the edit button
+            if (actionBar) {
+                const editBtn = actionBar.querySelector('.edit-btn');
+                if (editBtn) {
+                    editBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                        </svg>
+                        Edit
+                    `;
+                    editBtn.disabled = false;
+                }
+            }
+            
+            // Show error message
+            alert('Error loading transaction: ' + error.message);
+        });
+}
+
+// Implementation of showEditTransactionPopup
+function showEditTransactionPopup(transaction) {
+    console.log("📝 Showing edit popup for transaction:", transaction);
+
+    const popup = document.getElementById("editTransactionPopup");
+    if (!popup) {
+        console.error("❌ Edit popup element not found!");
+        return;
+    }
+
+    try {
+        // Fill form fields
+        document.getElementById("edit_id").value = transaction.transaction_id;
+        document.getElementById("edit_description").value = transaction.description;
+        document.getElementById("edit_amount").value = transaction.amount;
+        document.getElementById("edit_type").value = transaction.type;
+        document.getElementById("edit_category").value = transaction.category;
+        
+        // Format date properly
+        let transactionDate = transaction.transaction_date;
+        if (transactionDate && transactionDate.includes('T')) {
+            transactionDate = transactionDate.split('T')[0];
+        }
+        document.getElementById("edit_transaction_date").value = transactionDate;
+
+        // Show popup
+        popup.style.display = "flex";
+        setTimeout(() => {
+            popup.classList.add("active");
+        }, 10);
+
+        // Initialize form listener
+        initializeEditFormListener();
+
+        console.log("✅ Edit popup should be visible now");
+    } catch (error) {
+        console.error("❌ Error while populating form:", error);
+        alert("Error showing edit form: " + error.message);
+    }
+}
+
+// Implementation of hideEditTransactionPopup
+function hideEditTransactionPopup() {
+    console.log("🔄 Hiding edit transaction popup");
+    const popup = document.getElementById("editTransactionPopup");
+    if (!popup) {
+        console.error("❌ Edit popup element not found!");
+        return;
+    }
+    
+    popup.classList.remove("active");
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 300);
+}
+
+// Implementation of editFormListener
+function initializeEditFormListener() {
+    console.log("🔄 Initializing edit form listener");
+    const editForm = document.getElementById('editTransactionForm');
+    if (!editForm) {
+        console.error("❌ Edit form not found!");
+        return;
+    }
+
+    // Remove existing listeners by cloning and replacing
+    const newForm = editForm.cloneNode(true);
+    editForm.parentNode.replaceChild(newForm, editForm);
+
+    newForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log("🔄 Edit form submitted");
+        
+        // Set up loading state for the submit button
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<div class="spinner-mini"></div> Saving...';
+        submitButton.disabled = true;
+        
+        // Get the form data
+        const formData = new FormData(this);
+        const transactionId = document.getElementById('edit_id').value;
+        
+        // Convert FormData to JSON object
+        const formDataObject = {};
+        formData.forEach((value, key) => {
+            formDataObject[key] = value;
+        });
+        
+        console.log("📦 Sending transaction update data:", formDataObject);
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) {
+            console.error("❌ CSRF token not found");
+            alert("Security token missing. Please refresh the page and try again.");
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+            return;
+        }
+        
+        // Send the update request
+        fetch(`/transactions/${transactionId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formDataObject)
+        })
+        .then(response => {
+            // Check for specific response codes
+            if (response.status === 404) {
+                throw new Error('Transaction not found. It may have been deleted.');
+            } else if (response.status === 403) {
+                throw new Error('You do not have permission to update this transaction.');
+            } else if (response.status === 422) {
+                return response.json().then(data => {
+                    throw new Error('Validation error: ' + 
+                        Object.values(data.errors || {}).flat().join(', '));
+                });
+            } else if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log("✅ Update response:", data);
+            
+            if (data.success) {
+                // Success message
+                alert('Transaction updated successfully!');
+                
+                // Hide the popup
+                hideEditTransactionPopup();
+                
+                // Reload the data
+                loadTransactions();
+            } else {
+                throw new Error(data.message || 'Failed to update transaction');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error updating transaction:', error);
+            alert('Error updating transaction: ' + error.message);
+            
+            // Reset button state
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+        });
+    });
+    
+    // Add listener for the cancel button
+    const cancelButton = newForm.querySelector('button[type="button"]');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            hideEditTransactionPopup();
+        });
+    }
+    
+    console.log("✅ Edit form listeners initialized");
+}
 </script>
 @endpush
 
@@ -1439,6 +1940,23 @@ function setupActionBarButtons() {
         visibility: hidden;
         transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0.3s;
     }
+    
+    /* Loading spinner for buttons */
+    .spinner-mini {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 @endpush
 
@@ -1601,10 +2119,8 @@ function makeRowsClickable() {
         row.setAttribute('data-clickable', 'true');
         
         row.addEventListener('click', function(e) {
-            // Don't act if clicking on checkbox or button
-            if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || 
-                e.target.closest('button') || e.target.tagName === 'svg' || 
-                e.target.tagName === 'path') {
+            // Don't act if clicking on checkbox itself or SVG elements
+            if (e.target.type === 'checkbox' || e.target.tagName === 'svg' || e.target.tagName === 'path') {
                 return;
             }
             
@@ -1755,4 +2271,5 @@ function fixActionButtons() {
         }
     }
 }
+</script>
 </script>
