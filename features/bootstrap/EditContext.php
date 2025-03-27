@@ -1,20 +1,16 @@
 <?php
 
 use Behat\Behat\Context\Context;
-use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use PHPUnit\Framework\Assert;
 
 /**
- * Defines application features from the specific context.
+ * Context for transaction edit and delete features
  */
-class FeatureContext implements Context
+class EditContext implements Context
 {
     private $amount;
     private $category;
     private $date;
-    private $errorMessage;
-    private $transactionSaved = false;
     private $transactionUpdated = false;
     private $transactionDeleted = false;
     private $showConfirmationDialog = false;
@@ -23,10 +19,6 @@ class FeatureContext implements Context
 
     /**
      * Initializes context.
-     *
-     * Every scenario gets its own context instance.
-     * You can also pass arbitrary arguments to the
-     * context constructor through behat.yml.
      */
     public function __construct()
     {
@@ -39,157 +31,6 @@ class FeatureContext implements Context
                 'date' => date('Y-m-d')
             ]
         ];
-    }
-
-    /**
-     * @Given I am on the transaction input page
-     */
-    public function iAmOnTheTransactionInputPage()
-    {
-        // Placeholder implementation
-    }
-
-    /**
-     * @When I enter a valid amount
-     */
-    public function iEnterAValidAmount()
-    {
-        $this->amount = 100.00;
-    }
-
-    /**
-     * @When I select a category
-     */
-    public function iSelectACategory()
-    {
-        $this->category = 'Food';
-    }
-
-    /**
-     * @When I select a date
-     */
-    public function iSelectADate()
-    {
-        $this->date = date('Y-m-d');
-    }
-
-    /**
-     * @When I click the save button
-     */
-    public function iClickTheSaveButton()
-    {
-        // Check if all required fields are filled
-        if (!empty($this->amount) && !empty($this->category) && !empty($this->date)) {
-            if ($this->selectedTransaction) {
-                // We're updating
-                $this->transactionUpdated = true;
-                
-                // Update the transaction in our array
-                foreach ($this->transactions as &$transaction) {
-                    if ($transaction['id'] === $this->selectedTransaction['id']) {
-                        $transaction['amount'] = $this->amount;
-                        $transaction['category'] = $this->category;
-                        $transaction['date'] = $this->date;
-                        break;
-                    }
-                }
-            } else {
-                // We're creating
-                $this->transactionSaved = true;
-                
-                // Add the transaction to our array
-                $this->transactions[] = [
-                    'id' => count($this->transactions) + 1,
-                    'amount' => $this->amount,
-                    'category' => $this->category,
-                    'date' => $this->date
-                ];
-            }
-        } else {
-            $this->transactionSaved = false;
-            $this->transactionUpdated = false;
-            if (empty($this->amount)) {
-                $this->errorMessage = 'Amount is required';
-            } elseif (empty($this->category)) {
-                $this->errorMessage = 'Category is required';
-            } elseif (empty($this->date)) {
-                $this->errorMessage = 'Date is required';
-            }
-        }
-    }
-
-    /**
-     * @Then the transaction should be saved
-     */
-    public function theTransactionShouldBeSaved()
-    {
-        Assert::assertTrue($this->transactionSaved, 'Transaction was not saved.');
-    }
-
-    /**
-     * @Then the transaction should appear in the transaction list
-     */
-    public function theTransactionShouldAppearInTheTransactionList()
-    {
-        // Placeholder implementation
-        $found = false;
-        foreach ($this->transactions as $transaction) {
-            if ($transaction['amount'] == $this->amount && 
-                $transaction['category'] == $this->category && 
-                $transaction['date'] == $this->date) {
-                $found = true;
-                break;
-            }
-        }
-        Assert::assertTrue($found, 'Transaction not found in the list.');
-    }
-
-    /**
-     * @When I leave the amount field empty
-     */
-    public function iLeaveTheAmountFieldEmpty()
-    {
-        $this->amount = null;
-    }
-
-    /**
-     * @Then I should see an error message indicating amount is required
-     */
-    public function iShouldSeeAnErrorMessageIndicatingAmountIsRequired()
-    {
-        Assert::assertEquals('Amount is required', $this->errorMessage);
-    }
-
-    /**
-     * @When I do not select a category
-     */
-    public function iDoNotSelectACategory()
-    {
-        $this->category = null;
-    }
-
-    /**
-     * @Then I should see an error message indicating category is required
-     */
-    public function iShouldSeeAnErrorMessageIndicatingCategoryIsRequired()
-    {
-        Assert::assertEquals('Category is required', $this->errorMessage);
-    }
-
-    /**
-     * @When I do not select a date
-     */
-    public function iDoNotSelectADate()
-    {
-        $this->date = null;
-    }
-
-    /**
-     * @Then I should see an error message indicating date is required
-     */
-    public function iShouldSeeAnErrorMessageIndicatingDateIsRequired()
-    {
-        Assert::assertEquals('Date is required', $this->errorMessage);
     }
 
     /**
@@ -239,6 +80,28 @@ class FeatureContext implements Context
     }
 
     /**
+     * @When I click the save button
+     */
+    public function iClickTheSaveButton()
+    {
+        if (!empty($this->amount) && !empty($this->category) && !empty($this->date)) {
+            $this->transactionUpdated = true;
+            
+            // Update the transaction in our array
+            foreach ($this->transactions as &$transaction) {
+                if ($transaction['id'] === $this->selectedTransaction['id']) {
+                    $transaction['amount'] = $this->amount;
+                    $transaction['category'] = $this->category;
+                    $transaction['date'] = $this->date;
+                    break;
+                }
+            }
+        } else {
+            $this->transactionUpdated = false;
+        }
+    }
+
+    /**
      * @Then the transaction should be updated with the new values
      */
     public function theTransactionShouldBeUpdatedWithTheNewValues()
@@ -264,7 +127,17 @@ class FeatureContext implements Context
      */
     public function iShouldSeeTheUpdatedTransactionInTheList()
     {
-        $this->theTransactionShouldAppearInTheTransactionList();
+        // Check that the transaction appears in our array with the updated values
+        $found = false;
+        foreach ($this->transactions as $transaction) {
+            if ($transaction['amount'] == $this->amount && 
+                $transaction['category'] == $this->category && 
+                $transaction['date'] == $this->date) {
+                $found = true;
+                break;
+            }
+        }
+        Assert::assertTrue($found, 'Updated transaction not found in the list.');
     }
 
     /**
@@ -359,4 +232,4 @@ class FeatureContext implements Context
         }
         Assert::assertTrue($found, 'Transaction not found in the list.');
     }
-}
+} 

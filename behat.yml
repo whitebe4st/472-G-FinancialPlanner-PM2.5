@@ -1,7 +1,12 @@
 default:
   suites:
-    default:
+    insert:
       paths:
-        - '%paths.base%/features'
+        - '%paths.base%/features/insert.feature'
       contexts:
-        - FeatureContext 
+        - InsertContext
+    edit:
+      paths:
+        - '%paths.base%/features/edit.feature'
+      contexts:
+        - EditContext 
