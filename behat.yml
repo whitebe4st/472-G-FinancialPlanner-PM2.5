@@ -9,4 +9,9 @@ default:
       paths:
         - '%paths.base%/features/edit.feature'
       contexts:
-        - EditContext 
+        - EditContext
+    bookmark:
+      paths:
+        - '%paths.base%/features/bookmark.feature'
+      contexts:
+        - BookmarkContext 
