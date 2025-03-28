@@ -30,4 +30,9 @@ default:
         - '%paths.base%/features/type_filter.feature'
       contexts:
         - TypeFilterContext
+    categories:
+      paths:
+        - '%paths.base%/features/categories.feature'
+      contexts:
+        - CategoriesContext
 
