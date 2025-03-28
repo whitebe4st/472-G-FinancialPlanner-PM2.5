@@ -20,4 +20,9 @@ default:
         - '%paths.base%/features/summary.feature'
       contexts:
         - SummaryContext
+    time_filter:
+      paths:
+        - '%paths.base%/features/time_filter.feature'
+      contexts:
+        - TimeFilterContext
 
