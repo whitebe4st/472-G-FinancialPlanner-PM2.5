@@ -15,3 +15,9 @@ default:
         - '%paths.base%/features/bookmark.feature'
       contexts:
         - BookmarkContext 
+    summary:
+      paths:
+        - '%paths.base%/features/summary.feature'
+      contexts:
+        - SummaryContext
+
