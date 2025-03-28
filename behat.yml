@@ -25,4 +25,9 @@ default:
         - '%paths.base%/features/time_filter.feature'
       contexts:
         - TimeFilterContext
+    type_filter:
+      paths:
+        - '%paths.base%/features/type_filter.feature'
+      contexts:
+        - TypeFilterContext
 
