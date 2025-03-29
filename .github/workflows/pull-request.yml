@@ -18,7 +18,7 @@ jobs:
           php-version: "8.2"
           extensions: mbstring, pdo, pdo_mysql
           tools: composer, php-cs-fixer
-
+      
       - name: "Install Dependencies"
         run: composer install --prefer-dist --no-progress --no-suggest
 
