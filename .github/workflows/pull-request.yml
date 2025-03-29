@@ -1,0 +1,87 @@
+name: "Laravel CI" # เปลี่ยนชื่อ Workflow ให้สื่อความหมาย
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened] # ทริกเกอร์เหมือนเดิม
+
+permissions:
+  contents: read # Permission พื้นฐานสำหรับการ Checkout โค้ด
+
+env:
+  PHP_VERSION: '8.2' # กำหนดเวอร์ชัน PHP ที่ต้องการใช้ (ปรับแก้ตามโปรเจกต์)
+  # COMPOSER_VERSION: '2' # (ถ้าต้องการระบุเวอร์ชัน Composer)
+
+jobs:
+  laravel-tests: # เปลี่ยนชื่อ Job
+    name: "Lint & Test (PHP ${{ env.PHP_VERSION }})" # ชื่อที่แสดงผลในหน้า Actions
+    runs-on: "ubuntu-latest"
+    steps:
+      # 1. Checkout โค้ดจาก Repository
+      - name: "Checkout code"
+        uses: "actions/checkout@v4"
+
+      # 2. Setup PHP Environment
+      - name: "Setup PHP"
+        uses: shivammathur/setup-php@v2 # Action ยอดนิยมสำหรับ Setup PHP
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, dom, bcmath, pdo, sqlite, pdo_sqlite # เพิ่ม extensions ที่ Laravel มักใช้งาน (pdo_sqlite สำหรับ test กับ SQLite)
+          tools: composer:v2 # ติดตั้ง Composer เวอร์ชัน 2 ไปด้วยเลย
+          coverage: none # ไม่ต้องตั้งค่า code coverage ใน step นี้
+
+      # 3. Get Composer Cache Directory
+      # เพื่อหา path สำหรับ cache ช่วยให้ติดตั้ง dependencies เร็วขึ้นในครั้งถัดไป
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      # 4. Cache Composer dependencies
+      # Cache vendor directory เพื่อไม่ต้องโหลดใหม่ทุกครั้ง ถ้า composer.lock ไม่เปลี่ยน
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # 5. Install Dependencies
+      # ติดตั้ง Dependencies จาก composer.lock
+      - name: "Install Composer dependencies"
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # 6. Prepare Laravel Environment for Testing
+      # คัดลอก .env.example มาเป็น .env (สำคัญมากสำหรับ Artisan commands)
+      - name: "Prepare Environment File"
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+      # สร้าง Application Key
+      - name: "Generate Application Key"
+        run: php artisan key:generate
+
+      # --- เลือกใช้ Linter หรือ Static Analysis ตามที่ต้องการ ---
+
+      # 7. (ทางเลือก A) Run PHP CS Fixer (Linting - Style Check)
+      # ตรวจสอบ Code Style โดยไม่แก้ไขไฟล์ (ต้องมี php-cs-fixer ใน require-dev)
+      - name: "Run PHP CS Fixer (Dry Run)"
+        run: ./vendor/bin/php-cs-fixer fix --diff --dry-run --allow-risky=yes
+
+      # 7. (ทางเลือก B) Run Larastan/PHPStan (Static Analysis)
+      # ตรวจสอบหาข้อผิดพลาดเชิงลึก (ต้องมี larastan/larastan ใน require-dev)
+      # - name: "Run Larastan/PHPStan"
+      #   run: ./vendor/bin/phpstan analyse
+
+      # --------------------------------------------------------
+
+      # 8. Run Tests (PHPUnit)
+      # รัน Tests ทั้งหมด
+      - name: "Run PHPUnit Tests"
+        run: ./vendor/bin/phpunit
+
+      # (ทางเลือก) สร้างฐานข้อมูลสำหรับเทส ถ้าใช้ SQLite
+      # อาจจะต้องมี step นี้ก่อนรันเทส ถ้าเทสต้องการฐานข้อมูลจริงๆ
+      # - name: Create SQLite Database for Testing
+      #   run: touch database/database.sqlite
+
+      # (ทางเลือก) รัน Migration สำหรับเทส ถ้าใช้ SQLite และเทสต้องการ Schema
+      # - name: Run Migrations for Testing
+      #   run: php artisan migrate --env=testing
