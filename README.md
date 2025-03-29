@@ -4,7 +4,7 @@
 2. Report สรุปรายรับรายจ่าย
 3. แบ่งรายได้ออกเป็นสัดส่วนได้
 
-
+## Team Members
 รายชื่อสมาชิกรวม 4 คน
 
 ชื่อ:     นายธีรภัทร์ อนันต์ไพศาลสิน (Project Owner)
@@ -26,3 +26,28 @@
 รหัสนิสิต: 6510405571
 หมู่เรียน:  1
 ชัั้นปีที่:   3
+
+## Quick Start Guide for Contributors
+
+### Prerequisites
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Git
+
+### Setup Steps
+1. Clone the repository
+bash
+git clone https://github.com/whitebe4st/472-G-FinancialPlanner-PM2.5.git
+cd 472-G-FinancialPlanner-PM2.5
+
+2. Open setup.bat
+
+3. Visit http://localhost:8000 in your browser
+
+### Useful Commands
+- Stop the application:
+bash
+docker-compose down
+
+- Restart containers:
+bash
+docker-compose restart
