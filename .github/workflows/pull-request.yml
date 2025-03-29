@@ -21,6 +21,20 @@ jobs:
       
       - name: "Install Dependencies"
         run: composer install --prefer-dist --no-progress --no-suggest 
+      
+      - name: Prepare Environment File
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      # VV เพิ่มขั้นตอนนี้ VV
+      - name: Clear Config Cache
+        run: php artisan config:clear
+      # ^^ เพิ่มขั้นตอนนี้ ^^
+
+      - name: Run PHPUnit Tests
+        run: ./vendor/bin/phpunit
 
       - name: "Run Tests"
         run: php artisan test
