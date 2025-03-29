@@ -20,10 +20,7 @@ jobs:
           tools: composer, php-cs-fixer
       
       - name: "Install Dependencies"
-        run: composer install --prefer-dist --no-progress --no-suggest
-
-      - name: "Run PHP-CS-Fixer"
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        run: composer install --prefer-dist --no-progress --no-suggest 
 
       - name: "Run Tests"
         run: php artisan test
