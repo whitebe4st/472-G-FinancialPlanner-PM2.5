@@ -17,26 +17,29 @@ services:
     depends_on:
       - db
     environment:
+      DB_CONNECTION: mysql
       DB_HOST: db
+      DB_PORT: 3306
       DB_DATABASE: financial_planners
-      DB_USERNAME: financial_planner
-      DB_PASSWORD: secret
+      DB_USERNAME: root
+      DB_PASSWORD: 
 
-  db:
-    image: mysql:8.0
-    container_name: financial-planner-db
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: financial-planner-phpmyadmin
     restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: financial_planners
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_PASSWORD: secret
-      MYSQL_USER: financial_planner
-    volumes:
-      - dbdata:/var/lib/mysql/
     ports:
-      - "3306:3306"
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: 
+      PMA_USER: root
+      PMA_PASSWORD: 
     networks:
       - financial-planner
+    depends_on:
+      - db
 
   nginx:
     image: nginx:alpine
@@ -58,52 +61,4 @@ networks:
 
 volumes:
   dbdata:
-    driver: local
-
-# Dockerfile content included as a multi-stage build
-x-dockerfile: |
-  FROM php:8.2-fpm
-
-  # Install system dependencies
-  RUN apt-get update && apt-get install -y \
-      git \
-      curl \
-      libpng-dev \
-      libonig-dev \
-      libxml2-dev \
-      zip \
-      unzip
-
-  # Clear cache
-  RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-  # Install PHP extensions
-  RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-  # Get latest Composer
-  COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-  WORKDIR /var/www
-
-# Nginx configuration included
-x-nginx-conf: |
-  server {
-      listen 80;
-      index index.php index.html;
-      error_log  /var/log/nginx/error.log;
-      access_log /var/log/nginx/access.log;
-      root /var/www/public;
-      location ~ \.php$ {
-          try_files $uri =404;
-          fastcgi_split_path_info ^(.+\.php)(/.+)$;
-          fastcgi_pass app:9000;
-          fastcgi_index index.php;
-          include fastcgi_params;
-          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-          fastcgi_param PATH_INFO $fastcgi_path_info;
-      }
-      location / {
-          try_files $uri $uri/ /index.php?$query_string;
-          gzip_static on;
-      }
-  } 
+    driver: local 
