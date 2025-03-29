@@ -13,7 +13,7 @@ env:
 
 jobs:
   laravel-tests: # เปลี่ยนชื่อ Job
-    name: "Lint & Test (PHP ${{ env.PHP_VERSION }})" # ชื่อที่แสดงผลในหน้า Actions
+    name: "Lint & Test (PHP)" # ชื่อที่แสดงผลในหน้า Actions
     runs-on: "ubuntu-latest"
     steps:
       # 1. Checkout โค้ดจาก Repository
