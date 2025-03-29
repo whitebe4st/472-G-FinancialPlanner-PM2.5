@@ -1,0 +1,1252 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Jost', sans-serif;
+    background: #FFFFFF;
+    min-height: 100vh;
+}
+
+/* Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.container nav {
+    border-right: 2px solid #D8D8D8;
+    padding: 25px;
+    height: 100%;
+}
+
+.sideBar {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 30px;
+}
+
+.sideBar a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    border: 2px solid #71D881;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #262626;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.sideBar a:hover, .sideBar a.active {
+    background: #71D881;
+    color: white;
+}
+
+/* Icon color change on hover/active */
+.sideBar a:hover svg path,
+.sideBar a:hover svg circle,
+.sideBar a.active svg path,
+.sideBar a.active svg circle {
+    stroke: white;  /* Make icons white on hover/active */
+}
+
+/* Header/Navbar Styles */
+.navBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    border-bottom: 2px solid #D8D8D8;
+    padding: 0 30px;
+}
+
+/* Search Bar Styles */
+.searchBar {
+    display: flex;
+    align-items: center;
+    width: 420px;
+    height: 44px;
+    border: 2px solid #D8D8D8;
+    border-radius: 10px;
+    padding: 0 10px;
+    gap: 8px;
+    background: #FFFFFF;
+    margin: 0;
+}
+
+.searchInput {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    color: #262626;
+}
+
+.searchInput::placeholder {
+    color: rgba(216, 216, 216, 0.8);
+}
+
+/* User Section Styles */
+.user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.notification-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Main Content Styles */
+.container h1 {
+    font-size: 32px;
+    color: #262626;
+    margin-bottom: 10px;
+}
+
+.container p {
+    color: #262626;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+/* Table Container Styles */
+.table-container {
+    width: 100%;
+    padding: 20px;
+    border: 2px solid #D8D8D8;
+    border-radius: 40px;
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin: 20px 0;
+    transition: all 0.3s ease;
+}
+
+/* Dark mode specific shadow */
+[data-theme="dark"] .table-container {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Table Header enhancement */
+.table-header {
+    width: 1080px;
+    margin: 0 auto 20px auto;
+    padding: 0 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Table inner spacing */
+table {
+    width: 1080px;
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 0 8px;  /* Adds vertical spacing between rows */
+}
+
+/* Table row hover effect */
+.table-container tr:not(.head-table):hover {
+    background: var(--hover-bg);
+    transition: background-color 0.2s ease;
+}
+
+/* Animation keyframes for table container */
+@keyframes tableAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Table Styles */
+.head-table {
+    background: rgba(113, 216, 129, 0.1);
+    color: #262626;
+    border-radius: 10px;
+    margin-bottom: 8px;  /* Add space after header */
+}
+
+.head-table th:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    padding-left: 15px;  /* Add padding for rounded corners */
+}
+
+.head-table th:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-right: 15px;  /* Add padding for rounded corners */
+}
+
+.table-container th, .table-container td {
+    padding: 15px;
+    text-align: left;
+    color: #262626;
+    font-weight: 600;
+    font-size: 20px;
+}
+
+/* Add Transaction Button */
+.addBar-btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.addBar-btn button {
+    width: 40px;
+    height: 40px;
+    background: #71D881;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 10px;
+}
+
+.page-btn, .page-nav {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #262626;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.page-btn:hover {
+    background: rgba(113, 216, 129, 0.1);
+    border-radius: 50%;
+}
+
+.page-btn.active {
+    background: #71D881;
+    color: white;
+    border-radius: 50%;
+}
+
+.page-nav {
+    color: #595970;
+}
+
+.page-nav:hover {
+    color: #71D881;
+}
+
+.page-nav:disabled {
+    color: rgba(89, 89, 112, 0.5);
+    cursor: not-allowed;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 2px solid #71D881;
+    border-radius: 5px;
+    background: white;
+    color: #262626;
+    cursor: pointer;
+}
+
+/* Profile Styles */
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Profile and Notification Links */
+.notification-icon, .profile {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Popup Styles */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.popup.active {
+    opacity: 1;
+}
+
+#bookmarkSelectionModal {
+    z-index: 1001; /* Higher than regular popup */
+}
+
+#bookmarkSelectionModal.active {
+    display: flex;
+}
+
+#addTransactionPopup.active,
+#editTransactionPopup.active {
+    display: flex;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.popup-header h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.popup-header button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.popup-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .popup-content {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #262626;
+    font-weight: 600;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #71D881;
+    border-radius: 10px;
+    font-family: 'Jost', sans-serif;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.button-group button {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+}
+
+.button-group button[type="button"] {
+    background: white;
+    color: #FF3B30;
+    border: 2px solid #FF3B30;
+}
+
+.button-group button[type="button"]:hover {
+    background: #FF3B30;
+    color: white;
+}
+
+.button-group button[type="submit"] {
+    background: #71D881;
+    color: white;
+}
+
+/* Logout Button Styles */
+.logout-container {
+    margin-top: auto;  /* Push to bottom */
+    padding: 20px;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 2px solid #FF3B30;
+    border-radius: 10px;
+    color: #FF3B30;
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: #FF3B30;
+    color: white;
+}
+
+.logout-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2px;
+}
+
+/* Update sidebar to allow flex positioning */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.sidebar nav {
+    flex: 1;  /* Take remaining space */
+}
+
+.category-input-container {
+    position: relative;
+}
+
+.category-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.category-dropdown.show {
+    display: block;
+}
+
+.category-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.category-option:hover {
+    background-color: #f5f5f5;
+}
+
+.no-categories {
+    padding: 10px 15px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Logo Text */
+.logo span:last-child {
+    color: #262626;
+}
+
+/* Dropdown Text */
+.dropdown-content a {
+    color: #262626;
+}
+
+.dropdown-content a.selected {
+    color: #262626;
+}
+
+/* Transaction Table Container */
+#transactionTable {
+    min-height: 200px;
+    transition: opacity 0.2s ease;
+    padding: 30px;  /* Increased padding */
+    border: 2px solid #D8D8D8;
+    border-radius: 20px;
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin: 20px 0;
+    max-width: 1120px;  /* Increased width */
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: auto;
+}
+
+/* Transaction title styling */
+.transaction-title {
+    text-align: left;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    padding-left: 15px;  /* Align with table content */
+}
+
+/* Table width adjustment */
+#transactionTable table {
+    width: 100%;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Dark mode specific shadow */
+[data-theme="dark"] #transactionTable {
+    border-color: var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure table fits within container */
+#transactionTable tr {
+    animation: slideIn 0.2s ease;
+    animation-fill-mode: both;
+}
+
+/* Dark Mode Styles */
+:root {
+    --bg-color: #FFFFFF;
+    --text-color: #262626;
+    --border-color: #D8D8D8;
+    --hover-bg: rgba(113, 216, 129, 0.1);
+    --table-header-bg: rgba(113, 216, 129, 0.1);
+    --card-bg: #FFFFFF;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #FFFFFF;
+    --border-color: #333333;
+    --hover-bg: rgba(113, 216, 129, 0.2);
+    --table-header-bg: rgba(113, 216, 129, 0.15);
+    --card-bg: #242424;
+}
+
+/* Additional dark mode text color fixes */
+[data-theme="dark"] .container h1,
+[data-theme="dark"] .container p,
+[data-theme="dark"] .sideBar a,
+[data-theme="dark"] .logo span:last-child {
+    color: var(--text-color);
+}
+
+/* Dark mode logo handling */
+.logo-light {
+    display: block;
+}
+
+.logo-dark {
+    display: none;
+}
+
+[data-theme="dark"] .logo-light {
+    display: none;
+}
+
+[data-theme="dark"] .logo-dark {
+    display: block;
+}
+
+/* Apply variables */
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.container nav {
+    border-right: 2px solid var(--border-color);
+}
+
+.navBar {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-container {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.head-table {
+    background: var(--table-header-bg);
+}
+
+.table-container th, 
+.table-container td {
+    color: var(--text-color);
+}
+
+.searchBar {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.searchInput {
+    color: var(--text-color);
+    background: transparent;
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+    background: var(--hover-bg);
+}
+
+[data-theme="dark"] .sun {
+    display: none;
+}
+
+[data-theme="light"] .moon {
+    display: none;
+}
+
+/* Dark mode adjustment */
+[data-theme="dark"] .head-table {
+    background: rgba(113, 216, 129, 0.15);  /* Slightly more visible in dark mode */
+    color: var(--text-color);
+}
+
+/* Table cell borders */
+#transactionTable td,
+#transactionTable th {
+    padding: 15px;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Remove right border from last column */
+#transactionTable td:last-child,
+#transactionTable th:last-child {
+    border-right: none;
+}
+
+/* Remove bottom border from last row */
+#transactionTable tr:last-child td {
+    border-bottom: none;
+}
+
+/* Header specific styling */
+.head-table th {
+    background: rgba(113, 216, 129, 0.1);
+    border-bottom: 2px solid var(--border-color);  /* Slightly thicker bottom border for header */
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] #transactionTable td,
+[data-theme="dark"] #transactionTable th {
+    border-color: rgba(216, 216, 216, 0.1);  /* More subtle borders in dark mode */
+}
+
+[data-theme="dark"] .head-table th {
+    border-color: rgba(113, 216, 129, 0.2);  /* Slightly visible header border in dark mode */
+}
+
+/* Bookmark button styling */
+.bookmark-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG bookmark icon specific styling */
+.bookmark-btn svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.bookmark-btn:hover svg path {
+    stroke: #71D881;
+    fill: #71D881;
+}
+
+/* Active/bookmarked state */
+.bookmark-btn.active svg path {
+    stroke: #71D881;
+    fill: #71D881;
+}
+
+/* Sidebar bookmark icon */
+.sideBar a svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect - fill the icon */
+.sideBar a:hover svg path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Active state - keep it filled */
+.sideBar a.active svg path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Make sure icon is white when button background is green */
+.sideBar a:hover svg path,
+.sideBar a.active svg path {
+    fill: white;
+    stroke: white;
+}
+
+/* Table bookmark icon */
+#transactionTable td svg path {
+    stroke: #A0A0A0;
+    stroke-width: 2;
+    fill: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Hover effect - fill the icon */
+#transactionTable td svg:hover path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Active/bookmarked state */
+#transactionTable td svg.active path {
+    fill: #71D881;
+    stroke: #71D881;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    background: var(--success-color);
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification.error {
+    background: #ff4444;
+}
+
+.notification.fade-out {
+    animation: slideOut 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Filter button styling */
+.filter-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+    background: var(--hover-bg);
+}
+
+.filter-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Dropdown styling */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    min-width: 120px;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+    margin-top: 4px;
+}
+
+.dropdown-content a {
+    color: var(--text-color);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content a:hover {
+    background: var(--hover-bg);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .filter-button {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dropdown-content {
+    background: var(--dark-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Add these at the end of your CSS file */
+.turbolinks-progress-bar {
+    height: 3px;
+    background-color: #71D881;
+}
+
+/* Fade transition for page content */
+.content-wrapper {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.turbolinks-progress-bar ~ .content-wrapper {
+    opacity: 0;
+}
+
+/* Prevent FOUC (Flash of unstyled content) */
+.turbolinks-progress-bar ~ body {
+    visibility: hidden;
+}
+
+.form-actions {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.btn-bookmark {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-bookmark:hover {
+    background: var(--success-dark);
+}
+
+.bookmark-table {
+    flex: 1;
+    overflow-y: auto;
+    margin: 1rem 0;
+    min-height: 200px; /* Ensure minimum height for content */
+}
+
+.bookmark-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bookmark-table th,
+.bookmark-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.popup-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    z-index: 2;
+}
+
+.btn-primary,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    z-index: 3;
+}
+
+/* Add specific styles for bookmark modal */
+#bookmarkSelectionModal .popup-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#bookmarkSelectionModal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+#bookmarkSelectionModal th,
+#bookmarkSelectionModal td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#bookmarkSelectionModal .popup-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    z-index: 2;
+}
+
+#bookmarkSelectionModal .btn-primary,
+#bookmarkSelectionModal .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    z-index: 3;
+}
+
+#bookmarkSelectionModal .loading,
+#bookmarkSelectionModal .error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+#bookmarkSelectionModal {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#bookmarkSelectionModal.active {
+    opacity: 1;
+}
+
+.datetime-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-right: auto;
+}
+
+.datetime-display .time {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.datetime-display .date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+#global-clock-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    font-family: inherit;
+}
+
+#global-clock-time {
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+#global-calendar {
+    font-size: 0.9rem;
+    color: #666;
+    text-align: right;
+}
+
+/* Action bar styles */
+.action-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    min-width: 400px;
+}
+
+.action-bar.hidden {
+    transform: translate(-50%, 100px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Action bar button styles */
+.action-bar button {
+    padding: 8px 16px;
+    border: 1px solid black;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.action-bar button:hover {
+    background: #f0f0f0;
+}
+
+.action-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#selected-count {
+    color: #666;
+    margin-right: 10px;
+}
+
+/* Action bar button styles */
+.action-bar button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin: 0 0.25rem;
+}
+
+.action-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-bar .edit-btn {
+    background: var(--success-color, #71D881);
+    color: white;
+    visibility: visible;
+}
+
+.action-bar .edit-btn:hover:not(:disabled) {
+    background: var(--success-dark, #5bb96a);
+}
+
+.action-bar .bookmark-btn {
+    background: var(--primary-color, #3498db);
+    color: white;
+}
+
+.action-bar .bookmark-btn:hover {
+    background: var(--primary-dark, #2980b9);
+}
+
+.action-bar .remove-btn {
+    background: #ff4444;
+    color: white;
+}
+
+.action-bar .remove-btn:hover {
+    background: #cc3333;
+}
+
+/* Specific fix for edit popups to ensure they appear correctly */
+#editBookmarkPopup.active,
+#editTransactionPopup.active {
+    display: flex !important;
+    opacity: 1;
+}
+
+/* Ensure popups are hidden properly when inactive */
+.popup:not(.active) {
+    pointer-events: none;
+}
+
+/* When Turbolinks is loading, make sure popups are reset */
+.turbolinks-progress-bar ~ body .popup {
+    display: none !important;
+    opacity: 0;
+}
