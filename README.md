@@ -27,6 +27,13 @@
 หมู่เรียน:  1
 ชัั้นปีที่:   3
 
+
+###หน้าที่ที่รับผิดชอบ
+@Thirawatz Feat: บันทึกรายรับรายจ่าย
+@whitebe4st Feat: สรุปรายรับรายจ่าย
+@NOOKX2 Feat: แบ่งรายได้ออกเป็นสัดส่วนได้
+
+
 ## Quick Start Guide for Contributors
 
 ### Prerequisites
@@ -51,3 +58,5 @@ docker-compose down
 - Restart containers:
 bash
 docker-compose restart
+
+
